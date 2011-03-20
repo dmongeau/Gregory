@@ -1,0 +1,31 @@
+ExpiresActive On
+
+ExpiresByType image/gif A2592000
+ExpiresByType image/png A2592000
+ExpiresByType image/jpg A2592000
+ExpiresByType image/jpeg A2592000
+ExpiresByType image/x-icon A2592000
+
+
+RewriteEngine On
+
+RewriteBase /
+
+##############Si le fichier ou dossier existe on skip##################
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule "." - [skip=100]
+
+
+##############Redirection des images en cache
+RewriteCond %{REQUEST_URI} ^/photos/resizer/
+RewriteCond %{REQUEST_URI} !^.*//.*$
+RewriteCond %{REQUEST_METHOD} !POST
+RewriteCond %{QUERY_STRING} !.*=.*
+RewriteCond %{DOCUMENT_ROOT}/app/_var/cache/resizer/$1 -f
+RewriteRule ^photos/resizer/(.*) /app/_var/cache/resizer/$1 [L]
+##############
+
+
+
+RewriteCond %{REQUEST_FILENAME} !\.(ico|jpg|jpeg|gif|png)$ [NC]
+RewriteRule ^(.*)$ index.php [QSA,L]
