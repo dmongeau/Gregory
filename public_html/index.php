@@ -9,7 +9,15 @@ $config = include PATH_ROOT.'/config.php';
 
 $app = new Gregory($config);
 
-$app->addPlugin('db');
+$app->addPlugin('db',array(
+	'adapter' => 'pdo_mysql',
+	'config' => array(
+		'host' => 'localhost',
+		'username' => 'pubmtl',
+		'password' => 'RvaEhpLXuzCA6QJj',
+		'dbname' => 'pubmtl'
+	)
+));
 $app->addRoute(array(
 	'/' => 'home',
 	'/server.amf' => array(
@@ -25,3 +33,4 @@ $app->addRoute(array(
 $app->bootstrap();
 $app->run();
 $app->render();
+

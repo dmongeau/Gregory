@@ -3,12 +3,14 @@
 define('PATH_GREGORY',dirname(__FILE__));
 define('PATH_ZEND',PATH_GREGORY);
 
+set_include_path(get_include_path().PATH_SEPARATOR.PATH_ZEND);
+
 //Class Autoloader
 function autoloadZend($class) {
 	if(strtolower(substr($class,0,4)) == 'zend') {
 		$file = PATH_ZEND.'/'.str_replace('_','/',$class).'.php';
 		if (!file_exists($file)) return false;
-		include $file;
+		require $file;
 	} else {
 		return false;
 	}
@@ -25,17 +27,24 @@ class Gregory {
 	protected $_routes = array();
 	protected $_params = array();
 	
+	protected $_actions;
+	protected $_filters;
+	
 	protected $_plugins = array();
 	protected $_pluginsBootstrap = array();
 	protected $_pluginsStandby = array();
 	
 	protected $_page;
-	protected $_content;
-	protected $_data;
+	protected $_data = array();
+	protected $_head;
+	protected $_scripts = array();
+	protected $_stylesheets = array();
 	
 	public function __construct($config = array()) {
 		
 		$this->setConfig(array_merge($this->_config,$config));
+		
+		Gregory::set($this);
 		
 	}
 	
@@ -70,10 +79,11 @@ class Gregory {
 			
 		} else if($route === false) {
 			
-			$this->error404();
+			$this->error(404);
 			
 		}
 		
+		//Execute current page
 		if($page = $this->getPage()) {
 			
 			ob_start();
@@ -164,6 +174,48 @@ class Gregory {
 		return $this->_data;
 	}
 	
+	public function getHead() {
+		return $this->_head;
+	}
+	
+	public function setHead($head) {
+		$this->_head = $head;
+	}
+	
+	public function addScript($script) {
+		$this->_scripts[] = $script;
+	}
+	
+	public function addStylesheet($stylesheet) {
+		$this->_stylesheets[] = $stylesheet;
+	}
+	
+	public function clearScript() {
+		$this->_scripts = array();
+	}
+	
+	public function clearStylesheet() {
+		$this->_stylesheets = array();
+	}
+	
+	public function getScriptsAsHTML() {
+		
+		$lines = array();
+		foreach($this->_scripts as $script) {
+			$lines[] = '<script type="text/javascript">'.$script.'</script>';
+		}
+		return implode("\n",$lines);
+	}
+	
+	public function getStylesheetsAsHTML() {
+		
+		$lines = array();
+		foreach($this->_stylesheets as $stylesheet) {
+			$lines[] = '<script type="text/javascript">'.$stylesheet.'</script>';
+		}
+		return implode("\n",$lines);
+	}
+	
 	
 	/*
 	 *
@@ -251,13 +303,13 @@ class Gregory {
      * Méthodes relatives aux plugins
      *
      */
-    public function addPlugin($name, $file = null, $standby = true) {
+    public function addPlugin($name, $config = array(), $standby = true) {
 		
 		$path = $this->getConfig('pluginsPath');
 		
 		$plugin = array();
-		if($file === null) $plugin['file'] = $path.'/'.$name.'.php';
-		else $plugin['file'] = $path.'/'.$file;
+		$plugin['file'] = $path.'/'.Gregory::nameToFilename($name);
+		$plugin['config'] = $config;
 		
         if($standby) $this->_pluginsStandby[$name] = $plugin;
 		else $this->_pluginsBootstrap[$name] = $plugin;
@@ -277,6 +329,7 @@ class Gregory {
 	
 	public function initPlugin($name) {
 		if(isset($this->_pluginsStandby[$name])) {
+			$config = $this->_pluginsStandby[$name]['config'];
 			$plugin = include $this->_pluginsStandby[$name]['file'];
 			unset($this->_pluginsStandby[$name]);
 			return $plugin;
@@ -288,6 +341,7 @@ class Gregory {
 	public function bootstrapPlugins() {
 		if(isset($this->_pluginsBootstrap) && sizeof($this->_pluginsBootstrap)) {
 			foreach($this->_pluginsBootstrap as $name => $plugin) {
+				$config = $this->_pluginsBootstrap[$name]['config'];
 				$plugin = include $plugin['file'];
 				unset($this->_pluginsBootstrap[$name]);
 				$this->_plugins[$name] = $plugin;
@@ -297,19 +351,74 @@ class Gregory {
 	
 	
 	
+	/*
+     *
+     * Hook system
+     *
+     */
+	
+	public function addAction($action, $function, $params = array()) {
+		
+		if(!isset($this->_actions[$action])) $this->_actions[$action] = array();
+		$this->_actions[$action][] = array(
+			'function' => $function,
+			'params' => $params
+		);
+		
+	}
+	
+    public function doAction($action) {
+		if(isset($this->_actions[$action])) {
+			foreach($this->_actions[$action] as $a) {
+				if(sizeof($a['params'])) {
+					call_user_func_array($a['function'],$a['params']);
+				} else {
+					call_user_func_array($a['function']);
+				}
+			}
+		}
+    }
 	
 	
-	public function error404() {
+	public function addFilter($filter, $function) {
+		
+		if(!isset($this->_filters[$filter])) $this->_filters[$filter] = array();
+		$this->_filters[$filter][] = array(
+			'function' => $function
+		);
+		
+	}
+	
+    public function doFilter($filter,$input) {
+		if(isset($this->_filters[$filter])) {
+			foreach($this->_filters[$filter] as $a) {
+				$input = call_user_func($a['function'],$input);
+			}
+		}
+		
+		return $input;
+    }
+	
+	
+	
+	/*
+     *
+     * System errors
+     *
+     */
+	
+	
+	public function error($code = 500) {
 		
 		//header("HTTP/1.0 404 Not Found");
 		header('Content-type: text/html; charset="utf-8"');
 		
-		echo file_get_contents($this->getConfig('error.404'));
+		$file = $this->getConfig('error.'.$code);
+		if(file_exists($file)) echo file_get_contents($file);
 		
 		exit();
 		
 	}
-	
 	
 
     /*
