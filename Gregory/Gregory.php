@@ -311,6 +311,7 @@ class Gregory {
      * Méthodes statiques utilitaire
      *
      */
+	
 	public static function template($layout, $data = array()) {
 		if(strlen($layout) < 1024 && file_exists($layout)) {
 			ob_start();
@@ -326,8 +327,8 @@ class Gregory {
 		return $html;		
 	}
 	
-    public static function nameToFilename($name) {
-    	if(strpos($name,'.') === false) return $name.'.php';	
+    public static function nameToFilename($name, $ext = 'php') {
+    	if(strpos($name,'.') === false) return $name.'.'.$ext;	
 		else return $name;
     }
 		
