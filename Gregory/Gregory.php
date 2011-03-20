@@ -1,7 +1,7 @@
 <?php
 
-if(!defined(PATH_GREGORY)) define('PATH_GREGORY',dirname(__FILE__));
-if(!defined(PATH_ZEND)) define('PATH_ZEND',PATH_GREGORY);
+define('PATH_GREGORY',dirname(__FILE__));
+define('PATH_ZEND',PATH_GREGORY);
 
 //Class Autoloader
 function autoloadZend($class) {
@@ -23,6 +23,7 @@ class Gregory {
 	
 	protected $_config = array();
 	protected $_routes = array();
+	protected $_params = array();
 	
 	protected $_plugins = array();
 	protected $_pluginsBootstrap = array();
@@ -51,7 +52,13 @@ class Gregory {
 		
 		//Route
 		$route = $this->route($_SERVER['REQUEST_URI']);
+		$params = array();
 		if(is_array($route) && sizeof($route['route'])) {
+			
+			if(isset($route['params']) && sizeof($route['params'])) {
+				$this->setParams($route['params']);
+				$params = $route['params'];
+			}
 			
 			if(isset($route['route']['page'])) {
 				$this->setPage($route['route']['page']);
@@ -79,9 +86,12 @@ class Gregory {
 		
 	}
 	
-	public function render() {
+	public function render($return = false) {
 		
 		$data = $this->getData();
+		$data['head'] = $this->getHead();
+		$data['scripts'] = $this->getScriptsAsHTML();
+		$data['stylesheets'] = $this->getStylesheetsAsHTML();
 		$data['content'] = $this->getContent();
 		
 		
@@ -91,7 +101,8 @@ class Gregory {
 			$content = $data['content'];
 		}
 		
-		echo $content;
+		if(!$return) echo $content;
+		else return $content;
 	}
 	
 	/*
@@ -162,27 +173,42 @@ class Gregory {
 	public function route($url,$defaults = array()) {
 			
 		$routes = $this->getRoutes();
-		$url = '/'.trim($url,'/');
+		//$url = '/'.trim($url,'/');
+		$url = trim($url,'/');
 		$url = strpos($url,'?') !== false ? substr($url,0,strpos($url,'?')):$url;
+		$urlParts = explode('/',$url);
 		
 		if(isset($routes) && sizeof($routes)) {
 			foreach($routes as $regex => $route) {
 				
-				$regex = preg_quote($regex,'/');
-				if(strpos($regex,'.') === false && strpos($regex,'?') === false) $regex .= '\/?';
-				
-				if(preg_match('/^'.$regex.'$/i',$url,$matches)) {
-					
+				$match = true;
+				$params = array();
+				for($i = 0; $i < sizeof($route['parts']); $i++) {
+					$wildcard = false;
+					$u = isset($urlParts[$i]) ? $urlParts[$i]:null;
+					$part = $route['parts'][$i];
+					if(!isset($u)) {
+						$match = false;
+					} else if(substr($part,0,1) == ':') {
+						$name = substr($part,1);
+						$params[$name] = $u;
+					} else if($part == '*') {
+						$wildcard = true;
+					} else if(!preg_match('/^'.$part.'$/i',$u,$matches)) {
+						$match = false;
+					}
+				}
+				if(sizeof($route['parts'])  != sizeof($urlParts) && !$wildcard) $match = false;
+				if($match) {
 					$return = array(
 						'url' => $url,
 						'regex' => $regex,
-						'route' => (is_array($route) ? $route:array('page'=>$route))
+						'route' => $route,
+						'params' => $params
 					);
-					if(isset($matches[1]) && sizeof($matches[1])) $return['params'] = $matches[1];
-					
 					return $return;
-					
 				}
+				
 			}
 			return false;
 		}
@@ -199,6 +225,8 @@ class Gregory {
 		$routes = is_array($routes) ? $routes:array($routes=>$value);
 		
 		foreach($routes as $regex => $route) {
+			$route = (is_array($route) ? $route:array('page'=>$route));
+			$route['parts'] = explode('/',trim($regex,'/'));
 			$this->_routes[$regex] = $route;
 		}
 	}
@@ -206,6 +234,16 @@ class Gregory {
 	public function clearRoute() {
 		$this->_routes = array();
 	}
+	
+    public function setParams($name,$value = null) {
+        if(is_array($name)) $this->_params = $name;
+		else if(isset($value)) $this->_params[$name] = $value;
+    }
+
+    public function getParams($name = null) {
+        if(!isset($name)) return $this->_params;
+		else return isset($this->_params[$name]) ? $this->_params[$name]:null;
+    }
 	
 	
 	 /*

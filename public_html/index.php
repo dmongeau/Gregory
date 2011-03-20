@@ -1,11 +1,10 @@
 <?php
 
-define('PATH_GREGORY',dirname(__FILE__).'/../Gregory');
 define('PATH_ROOT',dirname(__FILE__));
 define('PATH_PAGES',dirname(__FILE__).'/pages');
 define('PATH_PLUGINS',dirname(__FILE__).'/plugins');
 
-require PATH_GREGORY.'/Gregory.php';
+require PATH_ROOT.'/../Gregory/Gregory.php';
 $config = include PATH_ROOT.'/config.php';
 
 $app = new Gregory($config);
@@ -15,6 +14,10 @@ $app->addRoute(array(
 	'/' => 'home',
 	'/server.amf' => array(
 		'page' => 'amf/amf.php',
+		'layout' => false
+	),
+	'/jesus/:bar' => array(
+		'page' => '500.html',
 		'layout' => false
 	),
 ));
