@@ -2,7 +2,7 @@
 
 define('PATH_ROOT',dirname(__FILE__));
 define('PATH_PAGES',dirname(__FILE__).'/pages');
-define('PATH_PLUGINS',dirname(__FILE__).'/plugins');
+define('PATH_PLUGINS',dirname(__FILE__).'/../Gregory/plugins');
 
 require PATH_ROOT.'/../Gregory/Gregory.php';
 $config = include PATH_ROOT.'/config.php';
@@ -20,7 +20,7 @@ $app->addPlugin('db',array(
 ));
 
 $app->addRoute(array(
-	'/' => 'home',
+	'/' => 'home.html',
 	'/server.amf' => array(
 		'page' => 'amf/amf.php',
 		'layout' => false
@@ -30,8 +30,7 @@ $app->addRoute(array(
 		'layout' => false
 	),
 	'/jesus/*' => array(
-		'page' => '500.html',
-		'layout' => false
+		'page' => 'jesus.html'
 	),
 ));
 
