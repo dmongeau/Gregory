@@ -98,7 +98,9 @@ class Gregory {
 			include	$page;
 			$content = ob_get_clean();
 			
-			if(isset($content) && !empty($content)) $this->setContent($content);
+			if(isset($content) && !empty($content)) {
+				$this->setContent($this->dofilter('page.content',$content));
+			}
 			
 		}
 		
@@ -107,10 +109,10 @@ class Gregory {
 	public function render($return = false) {
 		
 		$data = $this->getData();
-		$data['head'] = $this->getHead();
-		$data['scripts'] = $this->getScriptsAsHTML();
-		$data['stylesheets'] = $this->getStylesheetsAsHTML();
-		$data['content'] = $this->getContent();
+		$data['head'] = $this->dofilter('render.head',$this->getHead());
+		$data['scripts'] = $this->dofilter('render.scripts',$this->getScriptsAsHTML());
+		$data['stylesheets'] = $this->dofilter('render.stylesheets',$this->getStylesheetsAsHTML());
+		$data['content'] = $this->dofilter('render.content',$this->getContent());
 		
 		
 		if($layout = $this->getConfig('layout')) {
@@ -233,7 +235,6 @@ class Gregory {
 	public function route($url,$defaults = array()) {
 			
 		$routes = $this->getRoutes();
-		//$url = '/'.trim($url,'/');
 		$url = trim($url,$this->getConfig('route.urlDelimiter'));
 		$url = strpos($url,'?') !== false ? substr($url,0,strpos($url,'?')):$url;
 		$urlParts = explode($this->getConfig('route.urlDelimiter'),$url);
@@ -243,10 +244,13 @@ class Gregory {
 				
 				$match = true;
 				$params = array();
+				
 				for($i = 0; $i < sizeof($route['parts']); $i++) {
+					
 					$wildcard = false;
 					$u = isset($urlParts[$i]) ? $urlParts[$i]:null;
 					$part = $route['parts'][$i];
+					
 					if(!isset($u)) {
 						$match = false;
 					} else if(substr($part,0,1) == $this->getConfig('route.paramsPrefix')) {
@@ -256,12 +260,16 @@ class Gregory {
 						$wildcard = array_slice($urlParts,$i);
 						$params['wildcard'] = implode($this->getConfig('route.urlDelimiter'),$wildcard);
 						$wildcard = true;
-					} else if(!preg_match('/^'.$part.'$/i',$u,$matches)) {
+					} else if(!preg_match('/^'.preg_quote($part).'$/i',$u,$matches)) {
 						$match = false;
 					}
+					
 				}
+				
 				if(sizeof($route['parts'])  != sizeof($urlParts) && !$wildcard) $match = false;
+				
 				if($match) {
+					
 					$return = array(
 						'url' => $url,
 						'regex' => $regex,
@@ -270,6 +278,7 @@ class Gregory {
 					);
 					
 					return $return;
+					
 				}
 				
 			}
@@ -388,7 +397,7 @@ class Gregory {
 				if(sizeof($a['params'])) {
 					call_user_func_array($a['function'],$a['params']);
 				} else {
-					call_user_func_array($a['function']);
+					call_user_func_array($a['function'],array());
 				}
 			}
 		}
@@ -424,6 +433,8 @@ class Gregory {
 	
 	
 	public function error($code = 500) {
+		
+		$this->doAction('error.'.$code);
 		
 		//header("HTTP/1.0 404 Not Found");
 		header('Content-type: text/html; charset="utf-8"');
