@@ -1,8 +1,10 @@
 <?php
 
+
+
 return array(
 
-	'layout' => PATH_ROOT.'/layout.html',
+	'layout' => PATH_PAGES.'/_layout.html',
 	
 	'path' => array(
 		'pages' => PATH_PAGES,

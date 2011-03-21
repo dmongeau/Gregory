@@ -11,20 +11,6 @@ class Amf_Server {
 		
 	}
 	
-	public function getAgencies($obj) {
-		
-		$this->_verifySignature($obj->signature,get_class($this).'.getAgencies',$obj->timestamp);
-		
-		$db = Gregory::get()->db;
-		$items = $db->fetchAll($db->select()->from(array('a'=>'agencies'),array('*')));
-		//var_dump($items);
-		//exit();
-		$return = new StdClass();
-		$return->items = $items;
-		return $return;
-		
-	}
-	
 	public function test($obj) {
 		
 		$this->_verifySignature($obj->signature,get_class($this).'.test',$obj->timestamp);
