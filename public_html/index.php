@@ -18,13 +18,18 @@ $app->addPlugin('db',array(
 		'dbname' => 'pubmtl'
 	)
 ));
+
 $app->addRoute(array(
 	'/' => 'home',
 	'/server.amf' => array(
 		'page' => 'amf/amf.php',
 		'layout' => false
 	),
-	'/jesus/:bar' => array(
+	'/amf/test.html' =>  array(
+		'page' => 'amf/test.html',
+		'layout' => false
+	),
+	'/jesus/*' => array(
 		'page' => '500.html',
 		'layout' => false
 	),

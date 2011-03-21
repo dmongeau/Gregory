@@ -1,7 +1,5 @@
 <?php
 
-
-
 //$table = $this->db->describeTable('agencies');
 
 ?>

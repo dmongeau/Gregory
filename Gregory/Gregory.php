@@ -23,7 +23,13 @@ class Gregory {
 	
 	protected static $_app;
 	
-	protected $_config = array();
+	protected $_config = array(
+		'route' => array(
+			'wildcard' => '*',
+			'urlDelimiter' => '/',
+			'paramsPrefix' => ':'
+		)
+	);
 	protected $_routes = array();
 	protected $_params = array();
 	
@@ -60,30 +66,32 @@ class Gregory {
 		$url = !isset($url) ? $_SERVER['REQUEST_URI']:$url;
 		
 		//Route
-		$route = $this->route($_SERVER['REQUEST_URI']);
-		$params = array();
-		if(is_array($route) && sizeof($route['route'])) {
-			
-			if(isset($route['params']) && sizeof($route['params'])) {
-				$this->setParams($route['params']);
-				$params = $route['params'];
+		if($this->hasRoutes()) {
+			$route = $this->route($_SERVER['REQUEST_URI']);
+			$params = array();
+			if(is_array($route) && sizeof($route['route'])) {
+				
+				if(isset($route['params']) && sizeof($route['params'])) {
+					$this->setParams($route['params']);
+					$params = $route['params'];
+				}
+				
+				if(isset($route['route']['page'])) {
+					$this->setPage($route['route']['page']);
+				}
+				
+				if(isset($route['route']['layout'])) {
+					$this->setConfig('layout', $route['route']['layout']);
+				}
+				
+			} else if($route === false) {
+				
+				$this->error(404);
+				
 			}
-			
-			if(isset($route['route']['page'])) {
-				$this->setPage($route['route']['page']);
-			}
-			
-			if(isset($route['route']['layout'])) {
-				$this->setConfig('layout', $route['route']['layout']);
-			}
-			
-		} else if($route === false) {
-			
-			$this->error(404);
-			
 		}
 		
-		//Execute current page
+		//Load current page
 		if($page = $this->getPage()) {
 			
 			ob_start();
@@ -148,7 +156,7 @@ class Gregory {
 	 *
 	 */
 	public function setPage($page) {
-		$path = $this->getConfig('pagesPath').'/';
+		$path = $this->getConfig('path.pages').'/';
 		$filename = Gregory::nameToFilename($page);
 		if(file_exists($filename)) $this->_page = $filename;
 		else if(file_exists($path.$filename)) $this->_page = $path.$filename;
@@ -202,7 +210,7 @@ class Gregory {
 		
 		$lines = array();
 		foreach($this->_scripts as $script) {
-			$lines[] = '<script type="text/javascript">'.$script.'</script>';
+			$lines[] = '<script type="text/javascript" src="'.$script.'"></script>';
 		}
 		return implode("\n",$lines);
 	}
@@ -211,7 +219,7 @@ class Gregory {
 		
 		$lines = array();
 		foreach($this->_stylesheets as $stylesheet) {
-			$lines[] = '<script type="text/javascript">'.$stylesheet.'</script>';
+			$lines[] = '<link rel="stylesheet" type="text/css" href="'.$stylesheet.'"/>';
 		}
 		return implode("\n",$lines);
 	}
@@ -226,9 +234,9 @@ class Gregory {
 			
 		$routes = $this->getRoutes();
 		//$url = '/'.trim($url,'/');
-		$url = trim($url,'/');
+		$url = trim($url,$this->getConfig('route.urlDelimiter'));
 		$url = strpos($url,'?') !== false ? substr($url,0,strpos($url,'?')):$url;
-		$urlParts = explode('/',$url);
+		$urlParts = explode($this->getConfig('route.urlDelimiter'),$url);
 		
 		if(isset($routes) && sizeof($routes)) {
 			foreach($routes as $regex => $route) {
@@ -241,10 +249,12 @@ class Gregory {
 					$part = $route['parts'][$i];
 					if(!isset($u)) {
 						$match = false;
-					} else if(substr($part,0,1) == ':') {
+					} else if(substr($part,0,1) == $this->getConfig('route.paramsPrefix')) {
 						$name = substr($part,1);
 						$params[$name] = $u;
-					} else if($part == '*') {
+					} else if($part == $this->getConfig('route.wildcard')) {
+						$wildcard = array_slice($urlParts,$i);
+						$params['wildcard'] = implode($this->getConfig('route.urlDelimiter'),$wildcard);
 						$wildcard = true;
 					} else if(!preg_match('/^'.$part.'$/i',$u,$matches)) {
 						$match = false;
@@ -258,6 +268,7 @@ class Gregory {
 						'route' => $route,
 						'params' => $params
 					);
+					
 					return $return;
 				}
 				
@@ -269,6 +280,10 @@ class Gregory {
 			
 	}
 	
+	public function hasRoutes() {
+		return !isset($this->_routes) || !sizeof($this->_routes) ? false:true;
+	}
+	
 	public function getRoutes() {
 		return $this->_routes;
 	}
@@ -278,7 +293,7 @@ class Gregory {
 		
 		foreach($routes as $regex => $route) {
 			$route = (is_array($route) ? $route:array('page'=>$route));
-			$route['parts'] = explode('/',trim($regex,'/'));
+			$route['parts'] = explode($this->getConfig('route.urlDelimiter'),trim($regex,$this->getConfig('route.urlDelimiter')));
 			$this->_routes[$regex] = $route;
 		}
 	}
@@ -305,7 +320,7 @@ class Gregory {
      */
     public function addPlugin($name, $config = array(), $standby = true) {
 		
-		$path = $this->getConfig('pluginsPath');
+		$path = $this->getConfig('path.plugins');
 		
 		$plugin = array();
 		$plugin['file'] = $path.'/'.Gregory::nameToFilename($name);
