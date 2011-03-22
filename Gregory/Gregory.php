@@ -136,10 +136,12 @@ class Gregory {
 			$content = $data['content'];
 		}
 		
+		$this->_refreshUsageStats();
+		
 		if(!$return) echo $content;
 		else return $content;
 		
-		$this->_refreshUsageStats();
+		$this->printStats();
 	}
 	
 	/*
@@ -525,7 +527,9 @@ class Gregory {
 	}
 	
 	protected function _refreshUsageStats() {
-		$this->_setStats('maxMemory',round(memory_get_peak_usage(true)/(1024*1024),2).' mb');
+		//$this->_setStats('maxMemory',round(memory_get_peak_usage(true)/(1024*1024),2).' mb');
+		//$this->_setStats('maxMemory',memory_get_peak_usage(true).' mb');
+		$this->_setStats('maxMemory',round(memory_get_peak_usage(true)/1024/1024,4).' mb');
 		$this->_setStats('endTime',(float) array_sum(explode(' ',microtime())));
 		$this->_setStats('loadTime',round(($this->getStats('endTime') - $this->getStats('startTime')),4).' sec.');
 	}
@@ -543,6 +547,14 @@ class Gregory {
 			return $lastPart;
 		}
 		return null;
+	}
+	
+	public function printStats() {
+		echo '<!--'."\n\n";
+		echo '    Gregory Stats'."\n\n";
+		$stats = print_r($this->getStats(),true);
+		echo substr($stats,8,strlen($stats)-10);
+		echo "\n".'-->';
 	}
 
 
