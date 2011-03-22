@@ -30,8 +30,11 @@ class Gregory {
 			'paramsPrefix' => ':'
 		)
 	);
+	
 	protected $_routes = array();
 	protected $_params = array();
+	
+	protected $_stats = array();
 	
 	protected $_actions;
 	protected $_filters;
@@ -46,19 +49,29 @@ class Gregory {
 	protected $_scripts = array();
 	protected $_stylesheets = array();
 	
+	protected $_sharedMemory_data, $_sharedMemory_key, $_sharedMemory_shm, $_sharedMemory_mutex;
+	
 	public function __construct($config = array()) {
+		
+		$this->_setStats('startTime',(float) array_sum(explode(' ',microtime())));
+		
 		
 		$this->setConfig(array_merge($this->_config,$config));
 		
 		Gregory::set($this);
+		
+		$this->_refreshUsageStats();
 		
 	}
 	
 	
 	public function bootstrap($modules = array()) {
 		
-		$this->bootstrapPlugins();
+		$this->_bootstrapPlugins();
 		
+		$this->_bootstrapSharedMemory();
+		
+		$this->_refreshUsageStats();
 	}
 	
 	public function run($url = null) {
@@ -104,6 +117,8 @@ class Gregory {
 			
 		}
 		
+		$this->_refreshUsageStats();
+		
 	}
 	
 	public function render($return = false) {
@@ -123,6 +138,8 @@ class Gregory {
 		
 		if(!$return) echo $content;
 		else return $content;
+		
+		$this->_refreshUsageStats();
 	}
 	
 	/*
@@ -362,7 +379,7 @@ class Gregory {
 		return null;
 	}
 	
-	public function bootstrapPlugins() {
+	protected function _bootstrapPlugins() {
 		if(isset($this->_pluginsBootstrap) && sizeof($this->_pluginsBootstrap)) {
 			foreach($this->_pluginsBootstrap as $name => $plugin) {
 				$config = $this->_pluginsBootstrap[$name]['config'];
@@ -424,6 +441,55 @@ class Gregory {
     }
 	
 	
+	/*
+	 *
+	 * Core cache
+	 *
+	 */
+	protected function _bootstrapSharedMemory() {
+		$this->_sharedMemory_key = 3354354334;
+		$this->_sharedMemory_shm = shm_attach($this->_sharedMemory_key, 50000);
+        $this->_sharedMemory_mutex = sem_get($this->_sharedMemory_key, 1);
+		
+		$this->refreshSharedMemory();
+		
+	}
+	
+	protected function refreshSharedMemory($key = null) {
+		
+		sem_acquire($this->_sharedMemory_mutex);
+		$data = @shm_get_var($this->_sharedMemory_shm, $this->_sharedMemory_key);    
+		sem_release($this->_sharedMemory_mutex);
+		
+		$data = @unserialize($data);
+		
+		$this->_sharedMemory_data = isset($data) && sizeof($data) ? $data:array();
+	}
+	
+	protected function getSharedData($key = null) {
+		
+		if(!isset($key)) return $this->_sharedMemory_data;
+		else if(isset($key) && isset($this->_sharedMemory_data[$key])) return $this->_sharedMemory_data[$key];
+		else return null;
+	}
+	
+	protected function setSharedData($data, $value = null) {
+		
+		if(isset($value)) {
+			$this->_sharedMemory_data[$data] = $value;
+		} else {
+			$this->_sharedMemory_data = $data;
+		}
+		
+		$data = serialize($this->_sharedMemory_data);
+		
+		sem_acquire($this->_sharedMemory_mutex);
+		shm_put_var($this->_sharedMemory_shm, $this->_sharedMemory_key, $data);
+		sem_release($this->_sharedMemory_mutex);
+		
+		
+	}
+	
 	
 	/*
      *
@@ -446,6 +512,39 @@ class Gregory {
 		
 	}
 	
+
+	/*
+	 *
+	 * Stats
+	 *
+	 */
+	protected function _setStats($data, $value = null) {
+		if(!isset($value) && is_array($data)) $this->_stats = $data;
+		elseif(isset($value) && !is_array($data)) $this->_stats[$data] = $value;
+		
+	}
+	
+	protected function _refreshUsageStats() {
+		$this->_setStats('maxMemory',round(memory_get_peak_usage(true)/(1024*1024),2).' mb');
+		$this->_setStats('endTime',(float) array_sum(explode(' ',microtime())));
+		$this->_setStats('loadTime',round(($this->getStats('endTime') - $this->getStats('startTime')),4).' sec.');
+	}
+	
+	public function getStats($key = null) {
+		if(!isset($key)) return $this->_stats;
+		elseif(isset($this->_stats[$key])) return $this->_stats[$key];
+		elseif(!empty($key) && strpos($key,'.') !== false) {
+			$parts = explode('.',$key);
+			$lastPart = $this->_stats;
+			for($i = 0; $i < sizeof($parts); $i++) {
+				if(isset($lastPart[$parts[$i]])) $lastPart = $lastPart[$parts[$i]];
+				else return null;
+			}
+			return $lastPart;
+		}
+		return null;
+	}
+
 
     /*
      *
