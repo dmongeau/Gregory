@@ -1,11 +1,11 @@
 <?php
 
 define('PATH_GREGORY',dirname(__FILE__));
+
+
+//Zend Framework
 define('PATH_ZEND',PATH_GREGORY);
-
 set_include_path(get_include_path().PATH_SEPARATOR.PATH_ZEND);
-
-//Class Autoloader
 function autoloadZend($class) {
 	if(strtolower(substr($class,0,4)) == 'zend') {
 		$file = PATH_ZEND.'/'.str_replace('_','/',$class).'.php';
@@ -22,6 +22,8 @@ spl_autoload_register('autoloadZend');
 class Gregory {
 	
 	protected static $_app;
+	protected static $_initialized = false;
+	protected static $_sharedMemory;
 	
 	protected $_config = array(
 		'route' => array(
@@ -49,27 +51,31 @@ class Gregory {
 	protected $_scripts = array();
 	protected $_stylesheets = array();
 	
-	protected $_sharedMemory_data, $_sharedMemory_key, $_sharedMemory_shm, $_sharedMemory_mutex;
-	
 	public function __construct($config = array()) {
 		
 		$this->_setStats('startTime',(float) array_sum(explode(' ',microtime())));
 		
-		
 		$this->setConfig(array_merge($this->_config,$config));
 		
-		Gregory::set($this);
+		self::init();
+		self::set($this);
 		
 		$this->_refreshUsageStats();
 		
 	}
 	
 	
+	public static function init() {
+		if(self::$_initialized) {
+			self::_bootstrapSharedMemory();
+			self::$_initialized = true;
+		}
+	}
+	
+	
 	public function bootstrap($modules = array()) {
 		
 		$this->_bootstrapPlugins();
-		
-		$this->_bootstrapSharedMemory();
 		
 		$this->_refreshUsageStats();
 	}
@@ -107,12 +113,14 @@ class Gregory {
 		//Load current page
 		if($page = $this->getPage()) {
 			
+			$page = $this->dofilter('run.page',$page);
+			
 			ob_start();
 			include	$page;
 			$content = ob_get_clean();
 			
 			if(isset($content) && !empty($content)) {
-				$this->setContent($this->dofilter('page.content',$content));
+				$this->setContent($this->dofilter('run.content',$content));
 			}
 			
 		}
@@ -131,7 +139,7 @@ class Gregory {
 		
 		
 		if($layout = $this->getConfig('layout')) {
-			$content = Gregory::template($layout,$data);
+			$content = self::template($layout,$data);
 		} else {
 			$content = $data['content'];
 		}
@@ -178,7 +186,7 @@ class Gregory {
 	 */
 	public function setPage($page) {
 		$path = $this->getConfig('path.pages').'/';
-		$filename = Gregory::nameToFilename($page);
+		$filename = self::nameToFilename($page);
 		if(file_exists($filename)) $this->_page = $filename;
 		else if(file_exists($path.$filename)) $this->_page = $path.$filename;
 	}
@@ -361,7 +369,7 @@ class Gregory {
 		$path = $this->getConfig('path.plugins');
 		
 		$plugin = array();
-		$plugin['file'] = $path.'/'.Gregory::nameToFilename($name);
+		$plugin['file'] = $path.'/'.self::nameToFilename($name);
 		$plugin['config'] = $config;
 		
         if($standby) $this->_pluginsStandby[$name] = $plugin;
@@ -454,56 +462,6 @@ class Gregory {
 	
 	
 	/*
-	 *
-	 * Core cache
-	 *
-	 */
-	protected function _bootstrapSharedMemory() {
-		$this->_sharedMemory_key = ftok(__FILE__,'g');
-		$this->_sharedMemory_shm = shm_attach($this->_sharedMemory_key, 50000);
-        $this->_sharedMemory_mutex = sem_get($this->_sharedMemory_key, 1);
-		
-		$this->refreshSharedMemory();
-		
-	}
-	
-	protected function refreshSharedMemory($key = null) {
-		
-		sem_acquire($this->_sharedMemory_mutex);
-		$data = @shm_get_var($this->_sharedMemory_shm, $this->_sharedMemory_key);    
-		sem_release($this->_sharedMemory_mutex);
-		
-		$data = @unserialize($data);
-		
-		$this->_sharedMemory_data = isset($data) && sizeof($data) ? $data:array();
-	}
-	
-	protected function getSharedData($key = null) {
-		
-		if(!isset($key)) return $this->_sharedMemory_data;
-		else if(isset($key) && isset($this->_sharedMemory_data[$key])) return $this->_sharedMemory_data[$key];
-		else return null;
-	}
-	
-	protected function setSharedData($data, $value = null) {
-		
-		if(isset($value)) {
-			$this->_sharedMemory_data[$data] = $value;
-		} else {
-			$this->_sharedMemory_data = $data;
-		}
-		
-		$data = serialize($this->_sharedMemory_data);
-		
-		sem_acquire($this->_sharedMemory_mutex);
-		shm_put_var($this->_sharedMemory_shm, $this->_sharedMemory_key, $data);
-		sem_release($this->_sharedMemory_mutex);
-		
-		
-	}
-	
-	
-	/*
      *
      * System errors
      *
@@ -539,9 +497,9 @@ class Gregory {
 	protected function _refreshUsageStats() {
 		//$this->_setStats('maxMemory',round(memory_get_peak_usage(true)/(1024*1024),2).' mb');
 		//$this->_setStats('maxMemory',memory_get_peak_usage(true).' mb');
-		$this->_setStats('maxMemory',round(memory_get_peak_usage(true)/1024/1024,4).' mb');
+		$this->_setStats('maxMemory',round(memory_get_peak_usage()/1024,2).' kb');
 		$this->_setStats('endTime',(float) array_sum(explode(' ',microtime())));
-		$this->_setStats('loadTime',round(($this->getStats('endTime') - $this->getStats('startTime')),4).' sec.');
+		$this->_setStats('loadTime',round(($this->getStats('endTime') - $this->getStats('startTime'))*1000,2).' msec.');
 	}
 	
 	public function getStats($key = null) {
@@ -584,6 +542,63 @@ class Gregory {
 	
 	
 	
+	
+	/*
+	 *
+	 * Statics methods for shared memory
+	 *
+	 */
+	protected static function _bootstrapSharedMemory() {
+		
+		$key = ftok(__FILE__,'g');
+		self::$_sharedMemory = array(
+			'key' => $key,
+			'shm' => shm_attach($key, 50000),
+			'mutex' => sem_get($key, 1),
+			'data' => array()
+		);
+		
+		$this->refreshSharedMemory();
+		
+	}
+	
+	protected static function refreshSharedMemory($key = null) {
+		
+		sem_acquire(self::$_sharedMemory['mutex']);
+		$data = @shm_get_var(self::$_sharedMemory['shm'], self::$_sharedMemory['key']);    
+		sem_release(self::$_sharedMemory['mutex']);
+		
+		$data = @unserialize($data);
+		
+		$this->_sharedMemory_data = isset($data) && sizeof($data) ? $data:array();
+	}
+	
+	protected static function getSharedData($key = null) {
+		
+		if(!isset($key)) return self::$_sharedMemory['data'];
+		else if(isset($key) && isset(self::$_sharedMemory['date'][$key])) return self::$_sharedMemory['data'][$key];
+		else return null;
+	}
+	
+	protected static function setSharedData($data, $value = null) {
+		
+		if(isset($value)) {
+			self::$_sharedMemory['data'][$data] = $value;
+		} else {
+			self::$_sharedMemory['data'] = $data;
+		}
+		
+		$data = serialize(self::$_sharedMemory['data']);
+		
+		sem_acquire(self::$_sharedMemory['mutex']);
+		shm_put_var(self::$_sharedMemory['shm'], self::$_sharedMemory['key'], $data);
+		sem_release(self::$_sharedMemory['mutex']);
+		
+		
+	}
+	
+	
+	
 	/*
      *
      * Méthodes statiques utilitaire
@@ -606,6 +621,11 @@ class Gregory {
 	}
 	
     public static function nameToFilename($name, $ext = 'php') {
+    	if(strpos($name,'.') === false) return $name.'.'.$ext;	
+		else return $name;
+    }
+	
+    public static function absolutePath($file) {
     	if(strpos($name,'.') === false) return $name.'.'.$ext;	
 		else return $name;
     }
