@@ -6,9 +6,17 @@
 *****************************************************************
 
 
-CORE CONCEPTS
+CONCEPTS
 ----------------
 * You take what you need, it's a framework not a prison
 * The core should stand in a single file
 * Object oriented programming is not mandatory
 * It should be fast and simple
+
+
+
+CORE FUNCTIONALITIES
+----------------
+* Url rewriting written in pure PHP
+* Simple template engine
+* Plugins system
