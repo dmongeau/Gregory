@@ -37,6 +37,12 @@ $app->addPlugin('db',array(
 
 $app->addRoute(array(
 	'/' => 'home.html',
+	'/about.html' => array(
+		'page' => 'about.html'
+	),
+	'/contact.html' => array(
+		'page' => 'contact.php'
+	),
 	'/server.amf' => array(
 		'page' => 'amf/amf.php',
 		'layout' => false
@@ -45,10 +51,9 @@ $app->addRoute(array(
 		'page' => 'amf/test.html',
 		'layout' => false
 	),
-	'/jesus/*' => array(
-		'page' => 'jesus.html'
-	),
 ));
+
+$app->addStylesheet('/statics/css/commons.css');
 
 $app->bootstrap();
 $app->run();

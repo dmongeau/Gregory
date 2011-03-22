@@ -25,6 +25,7 @@ class Gregory {
 	protected static $_initialized = false;
 	protected static $_sharedMemory;
 	
+	protected $_bootstrapped = false;
 	protected $_config = array(
 		'route' => array(
 			'wildcard' => '*',
@@ -77,6 +78,9 @@ class Gregory {
 		
 		$this->_bootstrapPlugins();
 		
+		$this->doAction('bootstrap');
+		$this->_bootstrapped = true;
+		
 		$this->_refreshUsageStats();
 	}
 	
@@ -125,6 +129,8 @@ class Gregory {
 			
 		}
 		
+		$this->doAction('run');
+		
 		$this->_refreshUsageStats();
 		
 	}
@@ -143,6 +149,10 @@ class Gregory {
 		} else {
 			$content = $data['content'];
 		}
+		
+		$content = $this->doFilter('render.content',$content);
+		
+		$this->doAction('render');
 		
 		$this->_refreshUsageStats();
 		
@@ -369,11 +379,18 @@ class Gregory {
 		$path = $this->getConfig('path.plugins');
 		
 		$plugin = array();
+		$plugin['name'] = $name;
 		$plugin['file'] = $path.'/'.self::nameToFilename($name);
 		$plugin['config'] = $config;
 		
+		$plugin = $this->doFilter('plugin.add',$plugin);
+		
         if($standby) $this->_pluginsStandby[$name] = $plugin;
-		else $this->_pluginsBootstrap[$name] = $plugin;
+		else if(!$this->_bootstrapped) $this->_pluginsBootstrap[$name] = $plugin;
+		else {
+			$plugin = include $plugin['file'];
+			$this->_plugins[$name] = $plugin;
+		}
     }
 	
     public function setPlugin($name,$value) {
@@ -499,7 +516,7 @@ class Gregory {
 		//$this->_setStats('maxMemory',memory_get_peak_usage(true).' mb');
 		$this->_setStats('maxMemory',round(memory_get_peak_usage()/1024,2).' kb');
 		$this->_setStats('endTime',(float) array_sum(explode(' ',microtime())));
-		$this->_setStats('loadTime',round(($this->getStats('endTime') - $this->getStats('startTime'))*1000,2).' msec.');
+		$this->_setStats('executionTime',round(($this->getStats('endTime') - $this->getStats('startTime'))*1000,2).' msec.');
 	}
 	
 	public function getStats($key = null) {

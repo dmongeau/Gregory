@@ -1,14 +1,25 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<title>Gregory</title>
-%{HEAD}
-%{SCRIPTS}
-%{STYLESHEETS}
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Gregory</title>
+    %{HEAD}
+    %{SCRIPTS}
+    %{STYLESHEETS}
 </head>
 
 <body>
-%{CONTENT}
+    <div id="page">
+        <div id="header">
+            <ul id="menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/about.html">About</a></li>
+                <li><a href="/contact.html">Contact</a></li>
+            </ul>
+        </div>
+        <div id="content">
+            %{CONTENT}
+        </div>
+    </div>
 </body>
 </html>
