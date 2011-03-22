@@ -340,6 +340,16 @@ class Gregory {
 		else return isset($this->_params[$name]) ? $this->_params[$name]:null;
     }
 	
+    public function __get($name) {
+		$res = $this->getPlugin($name);
+        if($res === null && $this->hasPlugin($name)) {
+			$res = $this->initPlugin($name);
+			$this->setPlugin($name,$res);
+		}
+		
+		return $res;
+    }
+	
 	
 	 /*
      *
@@ -556,22 +566,6 @@ class Gregory {
 		echo substr($stats,8,strlen($stats)-10);
 		echo "\n".'-->';
 	}
-
-
-    /*
-     *
-     * Méthodes magiques
-     *
-     */
-    public function __get($name) {
-		$res = $this->getPlugin($name);
-        if($res === null && $this->hasPlugin($name)) {
-			$res = $this->initPlugin($name);
-			$this->setPlugin($name,$res);
-		}
-		
-		return $res;
-    }
 	
 	
 	
