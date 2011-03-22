@@ -1,7 +1,5 @@
 <?php
 
-echo memory_get_usage() . "\n"; 
-
 define('PATH_ROOT',dirname(__FILE__));
 define('PATH_PAGES',dirname(__FILE__).'/pages');
 define('PATH_PLUGINS',dirname(__FILE__).'/../Gregory/plugins');

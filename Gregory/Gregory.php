@@ -447,7 +447,7 @@ class Gregory {
 	 *
 	 */
 	protected function _bootstrapSharedMemory() {
-		$this->_sharedMemory_key = 3354354334;
+		$this->_sharedMemory_key = ftok(__FILE__,'g');
 		$this->_sharedMemory_shm = shm_attach($this->_sharedMemory_key, 50000);
         $this->_sharedMemory_mutex = sem_get($this->_sharedMemory_key, 1);
 		
