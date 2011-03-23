@@ -1,5 +1,17 @@
 <?php
 
+/*
+ *
+ * Gregory.php
+ *
+ * Single file webapp framework written in PHP
+ *
+ * http://gentlegreg.org
+ *
+ * @version 0.1
+ *
+ */
+
 define('PATH_GREGORY',dirname(__FILE__));
 define('PATH_ZEND',PATH_GREGORY);
 set_include_path(get_include_path().PATH_SEPARATOR.PATH_ZEND);
