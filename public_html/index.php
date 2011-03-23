@@ -15,7 +15,8 @@ $config = array(
 	),
 	
 	'error' => array(
-		'404' => PATH_PAGES.'/404.html'
+		'404' => PATH_PAGES.'/404.html',
+		'500' => PATH_PAGES.'/500.html'
 	)
 	
 );
@@ -54,6 +55,7 @@ $app->addRoute(array(
 ));
 
 $app->addStylesheet('/statics/css/commons.css');
+$app->addStylesheet('/statics/css/styles.css');
 
 $app->bootstrap();
 $app->run();

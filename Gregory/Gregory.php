@@ -480,9 +480,11 @@ class Gregory {
 		header('Content-type: text/html; charset="utf-8"');
 		
 		$file = $this->getConfig('error.'.$code);
-		if(file_exists($file)) echo file_get_contents($file);
+		//if(file_exists($file)) echo file_get_contents($file);
+		//exit();
 		
-		exit();
+		$this->setPage($file);
+		
 		
 	}
 	
