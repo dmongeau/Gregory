@@ -9,6 +9,7 @@
  * http://gentlegreg.org
  *
  * @version 0.1
+ * @author David Mongeau-Petitpas <dmp@commun.ca>
  *
  */
 
@@ -483,6 +484,9 @@ class Gregory {
      *
      */
 	
+	/*
+	 * TODO : Better error handling
+	 */
 	
 	public function error($code = 500) {
 		
