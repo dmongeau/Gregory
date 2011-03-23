@@ -1,22 +1,8 @@
 <?php
 
 define('PATH_GREGORY',dirname(__FILE__));
-
-
-//Zend Framework
 define('PATH_ZEND',PATH_GREGORY);
 set_include_path(get_include_path().PATH_SEPARATOR.PATH_ZEND);
-function autoloadZend($class) {
-	if(strtolower(substr($class,0,4)) == 'zend') {
-		$file = PATH_ZEND.'/'.str_replace('_','/',$class).'.php';
-		if (!file_exists($file)) return false;
-		require $file;
-	} else {
-		return false;
-	}
-}
-spl_autoload_register('autoloadZend');
-
 
 
 class Gregory {
@@ -24,6 +10,7 @@ class Gregory {
 	protected static $_app;
 	protected static $_initialized = false;
 	protected static $_sharedMemory;
+	protected static $_paths;
 	
 	protected $_bootstrapped = false;
 	protected $_config = array(
@@ -642,9 +629,52 @@ class Gregory {
 		else return $name;
     }
 	
-    public static function absolutePath($file) {
-    	if(strpos($name,'.') === false) return $name.'.'.$ext;	
-		else return $name;
+    public static function absolutePath($file,$paths = array()) {
+		
+		if(isset(self::$_paths[$file])) return self::$_paths[$file];
+		
+		$currentPath = dirname(__FILE__);
+    	if(!in_array($currentPath, $paths)) $paths[] = $currentPath;
+		foreach($paths as $path) {
+			$path = rtrim($path,'/');
+			$path = $path.'/'.$file;
+			if(file_exists($path)) {
+				self::$_paths[$file] = $path;
+				return $path;
+			}
+		}
+		return false;
     }
+	
+	
+	/*
+     *
+     * Autoload class
+     *
+     */
+	
+	
+
+	public static function _autoload($class) {
+		
+		//Zend Framework
+		$paths = array();
+		if(defined(PATH_ZEND)) $paths[] = PATH_ZEND;
+		$path = Gregory::absolutePath('Zend/', $paths);
+		
+		if($path) $path = trim(str_replace('/Zend', '', $path), '/');
+		else return false;
+		
+		if(strtolower(substr($class,0,4)) == 'zend') {
+			$file = $path.'/'.str_replace('_','/',$class).'.php';
+			if (!file_exists($file)) return false;
+			require $file;
+		} else {
+			return false;
+		}	
+	}
 		
 }
+
+
+spl_autoload_register(array('Gregory','_autoload'));

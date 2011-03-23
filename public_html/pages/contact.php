@@ -1,5 +1,10 @@
 <?php
 
+if($_POST) {
+	
+	
+	
+}
 
 ?><h1>Contact us</h1>
 
