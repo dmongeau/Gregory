@@ -30,9 +30,9 @@ $app->addPlugin('db',array(
 	'adapter' => 'pdo_mysql',
 	'config' => array(
 		'host' => 'localhost',
-		'username' => 'pubmtl',
+		'username' => 'test',
 		'password' => 'RvaEhpLXuzCA6QJj',
-		'dbname' => 'pubmtl'
+		'dbname' => 'test'
 	)
 ));
 
