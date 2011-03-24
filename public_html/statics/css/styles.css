@@ -66,6 +66,14 @@ a { color:#000; }
 	margin-bottom:20px;
 	font-weight:normal;
 }
+#content div.left {
+	float:left;
+	width:520px;
+}
+#content div.right {
+	float:right;
+	width:400px;
+}
 
 ul.point {
 	margin-left:20px;
