@@ -37,6 +37,7 @@ class Gregory {
 	protected $_routes = array();
 	protected $_params = array();
 	
+	protected $_errors = array();
 	protected $_stats = array();
 	
 	protected $_actions;
@@ -54,112 +55,129 @@ class Gregory {
 	
 	public function __construct($config = array()) {
 		
-		$this->_setStats('startTime',(float) array_sum(explode(' ',microtime())));
-		
-		$this->setConfig(array_merge($this->_config,$config));
-		
-		self::init();
-		self::set($this);
-		
-		$this->_refreshUsageStats();
+		try {
+			
+			$this->_setStats('startTime',(float) array_sum(explode(' ',microtime())));
+			
+			$this->setConfig(array_merge($this->_config,$config));
+			
+			self::init();
+			self::set($this);
+			
+			$this->_refreshUsageStats();
+			
+		} catch(Exception $e) {
+			$this->catchError($e);
+		}
 		
 	}
 	
 	
 	public static function init() {
-		if(self::$_initialized) {
-			self::_bootstrapSharedMemory();
-			self::$_initialized = true;
+		
+		try {
+		
+			if(!self::$_initialized) {
+				self::_bootstrapSharedMemory();
+				self::$_initialized = true;
+			}
+		
+		} catch(Exception $e) {
+			self::error(500);
 		}
 	}
 	
 	
 	public function bootstrap($modules = array()) {
 		
-		$this->_bootstrapPlugins();
-		
-		$this->doAction('bootstrap');
-		$this->_bootstrapped = true;
-		
-		$this->_refreshUsageStats();
+		try {
+			$this->_bootstrapPlugins();
+			
+			$this->doAction('bootstrap');
+			$this->_bootstrapped = true;
+			
+			$this->_refreshUsageStats();
+		} catch(Exception $e) {
+			$this->catchError($e);
+		}
 	}
 	
 	public function run($url = null) {
 		
-		$url = !isset($url) ? $_SERVER['REQUEST_URI']:$url;
-		
-		//Route
-		if($this->hasRoutes()) {
-			$route = $this->route($_SERVER['REQUEST_URI']);
-			$params = array();
-			if(is_array($route) && sizeof($route['route'])) {
-				
-				if(isset($route['params']) && sizeof($route['params'])) {
-					$this->setParams($route['params']);
-					$params = $route['params'];
-				}
-				
-				if(isset($route['route']['page'])) {
-					$this->setPage($route['route']['page']);
-				}
-				
-				if(isset($route['route']['layout'])) {
-					$this->setConfig('layout', $route['route']['layout']);
-				}
-				
-			} else if($route === false) {
-				
-				$this->error(404);
-				
-			}
-		}
-		
-		//Load current page
-		if($page = $this->getPage()) {
+		try {
+			$url = !isset($url) ? $_SERVER['REQUEST_URI']:$url;
 			
-			$page = $this->dofilter('run.page',$page);
-			
-			ob_start();
-			include	$page;
-			$content = ob_get_clean();
-			
-			if(isset($content) && !empty($content)) {
-				$this->setContent($this->dofilter('run.content',$content));
+			//Route
+			if($this->hasRoutes()) {
+				$route = $this->route($_SERVER['REQUEST_URI']);
+				$params = array();
+				if(is_array($route) && sizeof($route['route'])) {
+					
+					if(isset($route['params']) && sizeof($route['params'])) {
+						$this->setParams($route['params']);
+						$params = $route['params'];
+					}
+					
+					if(isset($route['route']['page'])) {
+						$this->setPage($route['route']['page']);
+					}
+					
+					if(isset($route['route']['layout'])) {
+						$this->setConfig('layout', $route['route']['layout']);
+					}
+					
+				} else if($route === false) {
+					
+					$this->error(404);
+					
+				}
 			}
 			
+			//Run current page
+			if($page = $this->getPage()) $this->runPage();
+			
+			$this->doAction('run');
+			
+			$this->_refreshUsageStats();
+			
+		} catch(Exception $e) {
+			$this->catchError($e);
 		}
-		
-		$this->doAction('run');
-		
-		$this->_refreshUsageStats();
 		
 	}
 	
 	public function render($return = false) {
 		
-		$data = $this->getData();
-		$data['head'] = $this->dofilter('render.head',$this->getHead());
-		$data['scripts'] = $this->dofilter('render.scripts',$this->getScriptsAsHTML());
-		$data['stylesheets'] = $this->dofilter('render.stylesheets',$this->getStylesheetsAsHTML());
-		$data['content'] = $this->dofilter('render.content',$this->getContent());
-		
-		
-		if($layout = $this->getConfig('layout')) {
-			$content = self::template($layout,$data);
-		} else {
-			$content = $data['content'];
+		try {
+			
+			$data = $this->getData();
+			$data['head'] = $this->dofilter('render.head',$this->getHead());
+			$data['scripts'] = $this->dofilter('render.scripts',$this->getScriptsAsHTML());
+			$data['stylesheets'] = $this->dofilter('render.stylesheets',$this->getStylesheetsAsHTML());
+			$content = $this->dofilter('render.content',$this->getContent());
+			
+			
+			if($layout = $this->getConfig('layout')) {
+				$content = self::template($layout,array('content'=>$content),false);
+				$content = self::template($content,$data);
+			} else {
+				$content = $data['content'];
+			}
+			
+			$content = $this->doFilter('render.content',$content);
+			
+			$this->doAction('render');
+			
+			$this->_refreshUsageStats();
+			
+			if(!$return) echo $content;
+			else return $content;
+			
+			$this->printStats();
+			
+		} catch(Exception $e) {
+			$this->catchError($e);
 		}
-		
-		$content = $this->doFilter('render.content',$content);
-		
-		$this->doAction('render');
-		
-		$this->_refreshUsageStats();
-		
-		if(!$return) echo $content;
-		else return $content;
-		
-		$this->printStats();
 	}
 	
 	/*
@@ -194,11 +212,11 @@ class Gregory {
 	 * Page
 	 *
 	 */
-	public function setPage($page) {
+	public function setPage($page, $run = false) {
 		$path = $this->getConfig('path.pages').'/';
 		$filename = self::nameToFilename($page);
-		if(file_exists($filename)) $this->_page = $filename;
-		else if(file_exists($path.$filename)) $this->_page = $path.$filename;
+		$this->_page = self::absolutePath($filename,array($path));
+		if($run) $this->runPage();
 	}
 	
 	public function getPage() {
@@ -219,6 +237,24 @@ class Gregory {
 	
 	public function getData() {
 		return $this->_data;
+	}
+	
+	public function runPage() {
+		
+		$page = $this->dofilter('run.page',$this->getPage());
+		$errors = $this->getErrors();
+		
+		$data = array('errors'=>array());
+		foreach($errors as $error) $data['errors'][] = $error->getMessage();
+		
+		ob_start();
+		include	$page;
+		$content = ob_get_clean();
+		
+		if(isset($content) && !empty($content)) {
+			$content = self::template($this->dofilter('run.content',$content),$data);
+			$this->setContent($this->dofilter('run.content',$content));
+		}	
 	}
 	
 	public function getHead() {
@@ -488,6 +524,22 @@ class Gregory {
 	 * TODO : Better error handling
 	 */
 	
+	public function catchError($exception) {
+		
+		if(is_a($exception,'Zend_Exception') || $exception->getCode() == 500) {
+			$this->error(500);
+		} else {
+			$this->_errors[] = $exception;
+		}
+		
+	}
+	
+	public function getErrors() {
+		
+		return $this->_errors;
+		
+	}
+	
 	public function error($code = 500) {
 		
 		$this->doAction('error.'.$code);
@@ -499,7 +551,7 @@ class Gregory {
 		//if(file_exists($file)) echo file_get_contents($file);
 		//exit();
 		
-		$this->setPage($file);
+		$this->setPage($file,true);
 		
 		
 	}
@@ -540,10 +592,16 @@ class Gregory {
 	}
 	
 	public function printStats() {
+		
+		$stats = $this->getStats();
+		
+		unset($stats['startTime']);
+		unset($stats['endTime']);
+		
 		echo '<!--'."\n\n";
 		echo '    Gregory Stats'."\n\n";
-		$stats = print_r($this->getStats(),true);
-		echo substr($stats,8,strlen($stats)-10);
+		$content = print_r($stats,true);
+		echo substr($content,8,strlen($content)-10);
 		echo "\n".'-->';
 	}
 	
@@ -580,7 +638,7 @@ class Gregory {
 			'data' => array()
 		);
 		
-		$this->refreshSharedMemory();
+		self::refreshSharedMemory();
 		
 	}
 	
@@ -592,7 +650,7 @@ class Gregory {
 		
 		$data = @unserialize($data);
 		
-		$this->_sharedMemory_data = isset($data) && sizeof($data) ? $data:array();
+		self::$_sharedMemory['data'] = isset($data) && sizeof($data) ? $data:array();
 	}
 	
 	protected static function getSharedData($key = null) {
@@ -627,7 +685,7 @@ class Gregory {
      *
      */
 	
-	public static function template($layout, $data = array()) {
+	public static function template($layout, $data = array(),$clean = true) {
 		if(strlen($layout) < 1024 && file_exists($layout)) {
 			ob_start();
 			include $layout;
@@ -635,9 +693,13 @@ class Gregory {
 		}
 		$html = $layout;
 		foreach($data as $key => $content) {
-			$html = str_replace('%{'.strtoupper($key).'}',$content,$html);
+			if(is_array($content)) {
+				
+			} else {
+				$html = str_replace('%{'.strtoupper($key).'}',$content,$html);
+			}
 		}
-		$html = preg_replace('/\%\{[^\}]+\}/','',$html);
+		if($clean) $html = preg_replace('/\%\{[^\}]+\}/','',$html);
 		
 		return $html;		
 	}
@@ -650,6 +712,11 @@ class Gregory {
     public static function absolutePath($file,$paths = array()) {
 		
 		if(isset(self::$_paths[$file])) return self::$_paths[$file];
+		
+		if(file_exists($file)) {
+			self::$_paths[$file] = $file;
+			return $file;
+		}
 		
 		$currentPath = dirname(__FILE__);
     	if(!in_array($currentPath, $paths)) $paths[] = $currentPath;

@@ -68,11 +68,11 @@ a { color:#000; }
 }
 #content div.left {
 	float:left;
-	width:520px;
+	width:590px;
 }
 #content div.right {
 	float:right;
-	width:400px;
+	width:350px;
 }
 
 ul.point {

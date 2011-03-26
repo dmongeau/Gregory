@@ -1,5 +1,7 @@
 <?php
 
+$select = $this->db->select();
+
 if($_POST) {
 	
 	
