@@ -36,6 +36,11 @@ $app->addPlugin('db',array(
 	)
 ));
 
+$app->addPlugin('resizer/resizer.php',array(
+	'path'=>dirname(__FILE__).'/statics/photos'
+),false);
+
+
 $app->addRoute(array(
 	'/' => 'home.html',
 	'/about.html' => array(

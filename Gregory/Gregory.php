@@ -122,6 +122,11 @@ class Gregory {
 						$this->setPage($route['route']['page']);
 					}
 					
+					if(isset($route['route']['function'])) {
+						$return = call_user_func_array($route['route']['function'],array($route));
+						if($return === false) $this->error(404);
+					}
+					
 					if(isset($route['route']['layout'])) {
 						$this->setConfig('layout', $route['route']['layout']);
 					}
@@ -416,8 +421,10 @@ class Gregory {
 		
 		$plugin = array();
 		$plugin['name'] = $name;
-		$plugin['file'] = $path.'/'.self::nameToFilename($name);
+		$plugin['file'] = self::absolutePath(self::nameToFilename($name),array($path));
 		$plugin['config'] = $config;
+		
+		if(!file_exists($plugin['file'])) return false;
 		
 		$plugin = $this->doFilter('plugin.add',$plugin);
 		
