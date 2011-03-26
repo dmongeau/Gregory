@@ -1,5 +1,14 @@
 <?php
-
+/*
+ *
+ * ImageResizer
+ *
+ * Class to resize image using gd library
+ *
+ * @author David Mongeau-Petitpas <dmp@commun.ca>
+ * @version 0.9
+ *
+ */
 
 class ImageResizer {
 	
