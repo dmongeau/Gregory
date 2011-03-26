@@ -259,9 +259,11 @@ class ImageResizer {
 	}
 	
 	public function render() {
+		
 		header('Content-type: '.$this->getMIME());
 		echo $this->_data;
-		exit();
+		
+		//exit();
 	}
 	
 	public function getMIME() {
