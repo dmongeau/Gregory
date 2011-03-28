@@ -34,6 +34,7 @@ class Gregory {
 		)
 	);
 	
+	protected $_route;
 	protected $_routes = array();
 	protected $_params = array();
 	
@@ -110,6 +111,7 @@ class Gregory {
 			//Route
 			if($this->hasRoutes()) {
 				$route = $this->route($_SERVER['REQUEST_URI']);
+				$this->setRoute($route);
 				$params = array();
 				if(is_array($route) && sizeof($route['route'])) {
 					
@@ -369,6 +371,14 @@ class Gregory {
 	
 	public function hasRoutes() {
 		return !isset($this->_routes) || !sizeof($this->_routes) ? false:true;
+	}
+	
+	public function getRoute() {
+		return $this->_route;
+	}
+	
+	public function setRoute($route) {
+		$this->_route = $route;
 	}
 	
 	public function getRoutes() {
