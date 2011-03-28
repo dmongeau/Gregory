@@ -37,7 +37,8 @@ $app->addPlugin('db',array(
 ));
 
 $app->addPlugin('resizer/resizer.php',array(
-	'path'=>dirname(__FILE__).'/statics/photos'
+	'path' => dirname(__FILE__).'/statics/photos',
+	'cachePath' =>dirname(__FILE__).'/statics/photos/_cache'
 ),false);
 
 

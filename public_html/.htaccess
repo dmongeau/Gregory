@@ -17,12 +17,12 @@ RewriteRule "." - [skip=100]
 
 
 ##############Redirection des images en cache
-RewriteCond %{REQUEST_URI} ^/photos/resizer/
+RewriteCond %{REQUEST_URI} ^/resizer/
 RewriteCond %{REQUEST_URI} !^.*//.*$
 RewriteCond %{REQUEST_METHOD} !POST
 RewriteCond %{QUERY_STRING} !.*=.*
-RewriteCond %{DOCUMENT_ROOT}/app/_var/cache/resizer/$1 -f
-RewriteRule ^photos/resizer/(.*) /app/_var/cache/resizer/$1 [L]
+RewriteCond %{DOCUMENT_ROOT}/statics/photos/_cache/$1 -f
+RewriteRule ^resizer/(.*) /statics/photos/_cache/$1 [L]
 ##############
 
 

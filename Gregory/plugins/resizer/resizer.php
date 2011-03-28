@@ -9,7 +9,7 @@ require dirname(__FILE__).'/ImageResizer.php';
  */
 $config = array_merge(array(
 	'path' => dirname(__FILE__),
-	'cachePath' => dirname(__FILE__).'/cache',
+	'cachePath' => dirname(__FILE__).'/_cache',
 	'quality' => 90,
 	'cache' => true,
 	'memory_limit' => '120M'
