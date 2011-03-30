@@ -1,7 +1,7 @@
 *****************************************************************
 
                             GREGORY
-               One file PHP application framework
+             Single file PHP application framework
 
 *****************************************************************
 
@@ -17,6 +17,14 @@ CONCEPTS
 
 CORE FUNCTIONALITIES
 ----------------
-* Url rewriting written in pure PHP
+* Url rewriting/routing written in pure PHP
 * Simple template engine
 * Plugins system
+* Support for multi-language website (TODO)
+
+
+
+CORE PLUGINS
+----------------
+* Database connection (using Zend_Db)
+* Image Resizer
