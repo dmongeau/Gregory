@@ -2,7 +2,7 @@
 
 define('PATH_ROOT',dirname(__FILE__));
 define('PATH_PAGES',dirname(__FILE__).'/pages');
-define('PATH_PLUGINS',dirname(__FILE__).'/../Gregory/plugins');
+define('PATH_PLUGINS',dirname(__FILE__).'/../plugins');
 
 
 $config = array(
@@ -22,7 +22,7 @@ $config = array(
 );
 
 
-require PATH_ROOT.'/../Gregory/Gregory.php';
+require PATH_ROOT.'/../Gregory.php';
 
 $app = new Gregory($config);
 
