@@ -316,7 +316,7 @@ class Gregory {
 			
 		$routes = $this->getRoutes();
 		$url = trim($url,$this->getConfig('route.urlDelimiter'));
-		$url = strpos($url,'?') !== false ? substr($url,0,strpos($url,'?')):$url;
+		$url = strpos($url,'?') !== false ? substr($url,0,strpos($url,'?')-1):$url;
 		$urlParts = explode($this->getConfig('route.urlDelimiter'),$url);
 		
 		if(isset($routes) && sizeof($routes)) {
