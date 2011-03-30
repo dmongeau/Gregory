@@ -768,7 +768,7 @@ class Gregory {
 		else return false;
 		
 		if(strtolower(substr($class,0,4)) == 'zend') {
-			$file = $path.'/'.str_replace('_','/',$class).'.php';
+			$file = '/'.$path.'/'.str_replace('_','/',$class).'.php';
 			if (!file_exists($file)) return false;
 			require $file;
 		} else {
@@ -777,6 +777,7 @@ class Gregory {
 	}
 		
 }
+
 
 
 spl_autoload_register(array('Gregory','_autoload'));
