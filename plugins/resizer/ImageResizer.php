@@ -67,8 +67,9 @@ class ImageResizer {
 		$offsetX = 0;
 		$offsetY = 0;
 		
-		if(isset($opts['ratio'])) {
-			$cropRatio = explode(':', (string) $opts['ratio']);
+		if(isset($opts['ratio']) && $opts['ratio']) {
+			//$cropRatio = explode(':', (string) $opts['ratio']);
+			$cropRatio = array($opts['width'],$opts['height']);
 			if(sizeof($cropRatio) == 2) {
 				$ratioComputed = $width / $height;
 				$cropRatioComputed = (float)$cropRatio[0] / (float)$cropRatio[1];
