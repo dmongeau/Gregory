@@ -238,8 +238,9 @@ class Gregory {
 		return $this->_content;
 	}
 	
-	public function setData($data) {
-		$this->_data = $data;
+	public function setData($data, $value = null) {
+		if(!is_array($data) && isset($value)) $this->_data[$data] = $value;
+		else if(is_array($data)) $this->_data = $data;
 	}
 	
 	public function getData() {
