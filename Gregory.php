@@ -317,7 +317,8 @@ class Gregory {
 			
 		$routes = $this->getRoutes();
 		$url = trim($url,$this->getConfig('route.urlDelimiter'));
-		$url = strpos($url,'?') !== false ? substr($url,0,strpos($url,'?')-1):$url;
+		$url = strpos($url,'?') !== false ? substr($url,0,strpos($url,'?')):$url;
+		$url = trim($url,$this->getConfig('route.urlDelimiter'));
 		$urlParts = explode($this->getConfig('route.urlDelimiter'),$url);
 		
 		if(isset($routes) && sizeof($routes)) {
@@ -710,11 +711,13 @@ class Gregory {
 			$layout = ob_get_clean();	
 		}
 		$html = $layout;
-		foreach($data as $key => $content) {
-			if(is_array($content)) {
-				
-			} else {
-				$html = str_replace('%{'.strtoupper($key).'}',$content,$html);
+		if(isset($data) && is_array($data)) {
+			foreach($data as $key => $content) {
+				if(is_array($content)) {
+					
+				} else {
+					$html = str_replace('%{'.strtoupper($key).'}',$content,$html);
+				}
 			}
 		}
 		if($clean) $html = preg_replace('/\%\{[^\}]+\}/','',$html);

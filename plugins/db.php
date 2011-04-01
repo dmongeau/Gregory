@@ -9,9 +9,9 @@ try {
 	$db = Zend_Db::factory($adapter,$config);
 	$db->getConnection();
 } catch (Zend_Db_Adapter_Exception $e) {
-	throw new Exception("Erreur de connexion à la base de données",500,$e);
+	throw new Exception("Erreur de connexion à la base de données",500);
 } catch (Zend_Exception $e) {
-	throw new Exception("Erreur d'initialisation de la base de données",500,$e);
+	throw new Exception("Erreur d'initialisation de la base de données",500);
 }
 
 $encoding = isset($config["encoding"]) ? $config["encoding"]:'utf8';

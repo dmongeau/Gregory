@@ -9,6 +9,10 @@
  * @version 0.9
  *
  */
+ 
+ini_set('gd.jpeg_ignore_warning', 1);
+ini_set('display_errors', 0);
+error_reporting(0);
 
 class ImageResizer {
 	
@@ -22,7 +26,7 @@ class ImageResizer {
 	public function __construct($file) {
 		
 		if (!file_exists($file)) {
-			throw new App_Exception('Image not found');
+			throw new Exception('Image not found');
 		}
 		
 		$this->_filename = $file;
@@ -264,7 +268,7 @@ class ImageResizer {
 		header('Content-type: '.$this->getMIME());
 		echo $this->_data;
 		
-		//exit();
+		exit();
 	}
 	
 	public function getMIME() {
