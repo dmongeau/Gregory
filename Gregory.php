@@ -180,7 +180,7 @@ class Gregory {
 			if(!$return) echo $content;
 			else return $content;
 			
-			$this->printStats();
+			//$this->printStats();
 			
 		} catch(Exception $e) {
 			$this->catchError($e);
