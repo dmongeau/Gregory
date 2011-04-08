@@ -413,6 +413,7 @@ class Gregory {
 	
     public function __get($name) {
 		$res = $this->getPlugin($name);
+		
         if($res === null && $this->hasPlugin($name)) {
 			$res = $this->initPlugin($name);
 			$this->setPlugin($name,$res);
@@ -432,11 +433,14 @@ class Gregory {
 		$path = $this->getConfig('path.plugins');
 		
 		$plugin = array();
-		$plugin['name'] = $name;
+		$plugin['name'] = strpos($name,'/') !== false ? substr($name,0,strpos($name,'/')):$name;
 		$plugin['file'] = self::absolutePath(self::nameToFilename($name),array($path));
 		$plugin['config'] = $config;
+		$name = $plugin['name'];
 		
-		if(!file_exists($plugin['file'])) return false;
+		if(!file_exists($plugin['file'])) {
+			return false;
+		}
 		
 		$plugin = $this->doFilter('plugin.add',$plugin);
 		
@@ -446,6 +450,7 @@ class Gregory {
 			$plugin = include $plugin['file'];
 			$this->_plugins[$name] = $plugin;
 		}
+		
     }
 	
     public function setPlugin($name,$value) {
