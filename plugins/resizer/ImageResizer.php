@@ -54,8 +54,8 @@ class ImageResizer {
 			$opts['height'] = $maxheight;
 		}
 		
-		$width = $this->_imagesize[0];
-		$height = $this->_imagesize[1];
+		$origWidth = $width = $this->_imagesize[0];
+		$origHeight = $height = $this->_imagesize[1];
 		
 		if(isset($opts['color'])) $color = preg_replace('/[^0-9a-fA-F]/', '', (string)$opts['color']);
 		else $color = FALSE;
@@ -107,11 +107,14 @@ class ImageResizer {
 		// Determine the quality of the output image
 		$quality	= (isset($opts['quality'])) ? (int)$opts['quality']:$config['quality'];
 		
+		$resizeFactor = (isset($opts['resize']) && (float)$opts['resize'] != 0) ? (float)$opts['resize']:1;
 		
 		if(isset($opts['crop']) && sizeof($cropRatio) == 2) {
-			$dst = imagecreatetruecolor($cropRatio[0], $cropRatio[1]);
+			$dst = imagecreatetruecolor($cropRatio[0]*$resizeFactor, $cropRatio[1]*$resizeFactor);
+			//$dst = imagecreatetruecolor($cropRatio[0], $cropRatio[1]);
 		} else {
-			$dst = imagecreatetruecolor($tnWidth, $tnHeight);
+			$dst = imagecreatetruecolor($tnWidth*$resizeFactor, $tnHeight*$resizeFactor);
+			//$dst = imagecreatetruecolor($tnWidth, $tnHeight*$resizeFactor);
 		}
 		
 		
@@ -176,6 +179,15 @@ class ImageResizer {
 				$destW = $width*($cropRatio[0]/$tnWidth);
 			}
 		
+		} else if (isset($opts['crop_width']) && isset($opts['crop_height'])) {
+			
+			$destW = (int)$opts['crop_width'];
+			$destH = (int)$opts['crop_height'];
+			$width = $origWidth;
+			$height = $origHeight;
+			$offsetX = $offsetX * ($width/$destW);
+			$offsetY = $offsetY * ($height/$destH);
+		
 		} else {
 			
 			$destH = $tnHeight;
@@ -183,8 +195,15 @@ class ImageResizer {
 			
 		}
 		
+		$w = $width;
+		$h = $height;
+		$dw = $destW*$resizeFactor;
+		//$dw = $destW;
+		$dh = $destH*$resizeFactor;
+		//$dh = $destH;
+		
 		// Resample the original image into the resized canvas we set up earlier
-		imagecopyresampled($dst, $src, 0, 0, $offsetX, $offsetY, $destW, $destH, $width, $height);
+		imagecopyresampled($dst, $src, 0, 0, $offsetX, $offsetY, $dw, $dh, $w, $h);
 		
 		if ($doSharpen) {
 			$sharpness	= self::findSharp($width, $tnWidth);

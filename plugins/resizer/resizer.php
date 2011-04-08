@@ -12,7 +12,7 @@ $config = array_merge(array(
 	'cachePath' => dirname(__FILE__).'/_cache',
 	'quality' => 90,
 	'cache' => true,
-	'memory_limit' => '120M'
+	'memory_limit' => '500M'
 ),$config);
 
 ImageResizer::setConfig($config);
@@ -46,7 +46,10 @@ function resizer_route($route) {
 	$params = array(
 		'w' => 'width',
 		'h' => 'height',
-		'q' => 'quality'
+		'q' => 'quality',
+		'cw' => 'crop_width',
+		'ch' => 'crop_height',
+		'r' => 'resize'
 	);
 	
 	$file = null;
@@ -57,9 +60,12 @@ function resizer_route($route) {
 		if(is_array($file)) $file[] = $part;
 		else if($part == 'bw') $options['blackwhite'] = true;
 		else if($part == 'ratio') $options['ratio'] = true;
-		else if(preg_match('/^([a-z])([0-9]+)$/',$part,$matches)) {
+		else if($part == 'crop') $options['crop'] = true;
+		else if(preg_match('/^([a-z]+)([0-9\.]+)$/',$part,$matches)) {
 			if(isset($params[$matches[1]])) {
 				$options[$params[$matches[1]]] = $matches[2];
+			} else {
+				$options[$matches[1]] = $matches[2];
 			}
 		}
 		else if($part == 'f') $file = array();
@@ -70,6 +76,7 @@ function resizer_route($route) {
 	
 	if(!$file || empty($file)) return false;
 	
+	ini_set("memory_limit",$config['memory_limit']);
 	
 	$Resizer = new ImageResizer($file);
 	$Resizer->resize($options);
