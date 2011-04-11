@@ -167,11 +167,7 @@ class Gregory {
 			if($layout = $this->getConfig('layout')) {
 				$content = self::template($layout,array('content'=>$content),false);
 				$content = self::template($content,$data);
-			} else {
-				$content = $data['content'];
 			}
-			
-			$content = $this->doFilter('render.content',$content);
 			
 			$this->doAction('render');
 			
