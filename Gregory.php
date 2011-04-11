@@ -27,6 +27,15 @@ class Gregory {
 	
 	protected $_bootstrapped = false;
 	protected $_config = array(
+		'layout' => null,
+		'path' => array(
+			'pages' => null,
+			'plugins' => null
+		),
+		'error' => array(
+			'404' => null,
+			'500' => null
+		),
 		'route' => array(
 			'wildcard' => '*',
 			'urlDelimiter' => '/',
@@ -312,10 +321,10 @@ class Gregory {
 	public function route($url,$defaults = array()) {
 			
 		$routes = $this->getRoutes();
-		$url = trim($url,$this->getConfig('route.urlDelimiter'));
+		$delimiter = $this->getConfig('route.urlDelimiter');
 		$url = strpos($url,'?') !== false ? substr($url,0,strpos($url,'?')):$url;
-		$url = trim($url,$this->getConfig('route.urlDelimiter'));
-		$urlParts = explode($this->getConfig('route.urlDelimiter'),$url);
+		$url = trim($url,$delimiter);
+		$urlParts = explode($delimiter,$url);
 		
 		if(isset($routes) && sizeof($routes)) {
 			foreach($routes as $regex => $route) {
@@ -331,9 +340,26 @@ class Gregory {
 					
 					if(!isset($u)) {
 						$match = false;
-					} else if(substr($part,0,1) == $this->getConfig('route.paramsPrefix')) {
-						$name = substr($part,1);
-						$params[$name] = $u;
+					} else if(substr($part,0,1) == $this->getConfig('route.paramsPrefix') && strlen($part) > 1) {
+						if(strpos($part,'.') !== false) {
+							$pos = strpos($u,'.');
+							if($pos === false) $match = false;
+							else {
+								$uext = strtolower(substr($u,$pos));
+								$u = substr($u,0,$pos);
+								
+								$pos = strpos($part,'.');
+								$ext = strtolower(substr($part,$pos));
+								$name = substr($part,1,$pos-1);
+								
+								if($ext != $uext) $match = false;
+								else $params[$name] = $u;
+							}
+							
+						} else {
+							$name = substr($part,1);
+							$params[$name] = $u;
+						}
 					} else if($part == $this->getConfig('route.wildcard')) {
 						$wildcard = array_slice($urlParts,$i);
 						$params['wildcard'] = implode($this->getConfig('route.urlDelimiter'),$wildcard);
@@ -386,9 +412,11 @@ class Gregory {
 	public function addRoute($routes,$value = null) {
 		$routes = is_array($routes) ? $routes:array($routes=>$value);
 		
+		$delimiter = $this->getConfig('route.urlDelimiter');
+		
 		foreach($routes as $regex => $route) {
 			$route = (is_array($route) ? $route:array('page'=>$route));
-			$route['parts'] = explode($this->getConfig('route.urlDelimiter'),trim($regex,$this->getConfig('route.urlDelimiter')));
+			$route['parts'] = explode($delimiter,trim($regex,$delimiter));
 			$this->_routes[$regex] = $route;
 		}
 	}

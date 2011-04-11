@@ -58,12 +58,19 @@ $app->addRoute(array(
 		'page' => 'amf/test.html',
 		'layout' => false
 	),
+	'/amf/:pid.html' =>  array(
+		'page' => 'test.php'
+	),
 ));
 
 $app->addStylesheet('/statics/css/commons.css');
 $app->addStylesheet('/statics/css/styles.css');
 
 $app->bootstrap();
+
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 $app->run();
 $app->render();
 
