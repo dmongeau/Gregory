@@ -29,18 +29,21 @@ class Gregory {
 	protected $_config = array(
 		'layout' => null,
 		'path' => array(
-			'pages' => null,
-			'plugins' => null
-		),
-		'error' => array(
-			'404' => null,
-			'500' => null
+			'pages' => PATH_GREGORY,
+			'plugins' => PATH_GREGORY
 		),
 		'route' => array(
 			'wildcard' => '*',
 			'urlDelimiter' => '/',
 			'paramsPrefix' => ':'
-		)
+		),
+		'debug' => array(
+			'stats' => true
+		),
+		'error' => array(
+			'404' => null,
+			'500' => null
+		),
 	);
 	
 	protected $_route;
@@ -129,8 +132,8 @@ class Gregory {
 						$params = $route['params'];
 					}
 					
-					if(isset($route['route']['page'])) {
-						$this->setPage($route['route']['page']);
+					if(isset($route['route']['layout'])) {
+						$this->setConfig('layout', $route['route']['layout']);
 					}
 					
 					if(isset($route['route']['function'])) {
@@ -138,8 +141,9 @@ class Gregory {
 						if($return === false) $this->error(404);
 					}
 					
-					if(isset($route['route']['layout'])) {
-						$this->setConfig('layout', $route['route']['layout']);
+					if(isset($route['route']['page'])) {
+						$this->setPage($route['route']['page']);
+						$this->runPage();
 					}
 					
 				} else if($route === false) {
@@ -148,9 +152,6 @@ class Gregory {
 					
 				}
 			}
-			
-			//Run current page
-			if($page = $this->getPage()) $this->runPage();
 			
 			$this->doAction('run');
 			
@@ -185,7 +186,7 @@ class Gregory {
 			if(!$return) echo $content;
 			else return $content;
 			
-			//$this->printStats();
+			if($this->getConfig('debug.stats') === true) $this->printStats();
 			
 		} catch(Exception $e) {
 			$this->catchError($e);
@@ -265,7 +266,7 @@ class Gregory {
 		$content = ob_get_clean();
 		
 		if(isset($content) && !empty($content)) {
-			$content = self::template($this->dofilter('run.content',$content),$data);
+			$content = self::template($content,$data);
 			$this->setContent($this->dofilter('run.content',$content));
 		}	
 	}
