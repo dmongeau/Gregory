@@ -29,8 +29,8 @@ class Gregory {
 	protected $_config = array(
 		'layout' => null,
 		'path' => array(
-			'pages' => PATH_GREGORY,
-			'plugins' => PATH_GREGORY
+			'pages' => null,
+			'plugins' => null
 		),
 		'route' => array(
 			'wildcard' => '*',
