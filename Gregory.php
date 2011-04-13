@@ -14,8 +14,6 @@
  */
 
 define('PATH_GREGORY',dirname(__FILE__));
-define('PATH_ZEND',PATH_GREGORY);
-set_include_path(get_include_path().PATH_SEPARATOR.PATH_ZEND);
 
 
 class Gregory {
@@ -69,13 +67,13 @@ class Gregory {
 	public function __construct($config = array()) {
 		
 		try {
+			self::set($this);
 			
 			$this->_setStats('startTime',(float) array_sum(explode(' ',microtime())));
 			
 			$this->setConfig(array_merge($this->_config,$config));
 			
 			self::init();
-			self::set($this);
 			
 			$this->_refreshUsageStats();
 			
@@ -814,4 +812,6 @@ class Gregory {
 
 
 
+define('PATH_ZEND',PATH_GREGORY);
+set_include_path(get_include_path().PATH_SEPARATOR.PATH_ZEND);
 spl_autoload_register(array('Gregory','_autoload'));

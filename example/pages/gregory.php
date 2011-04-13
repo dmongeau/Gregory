@@ -1,10 +1,17 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<title>Untitled Document</title>
-</head>
+<?php
 
-<body>
-</body>
-</html>
+$gregory = file_get_contents('https://github.com/dmongeau/Gregory/raw/master/Gregory.php');
+
+$this->addScript('/statics/js/syntaxHighlighter/shCore.js');
+$this->addScript('/statics/js/syntaxHighlighter/shBrushPhp.js');
+$this->addStylesheet('/statics/css/syntaxHighlighter/shCore.css');
+$this->addStylesheet('/statics/css/syntaxHighlighter/shThemeDefault.css');
+
+?>
+
+<div style="font-size:12px;">
+	<pre class="brush: php"><?=htmlentities($gregory)?></pre>
+</div>
+<script type="text/javascript">
+     SyntaxHighlighter.all()
+</script>
