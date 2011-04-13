@@ -28,3 +28,4 @@ CORE PLUGINS
 ----------------
 * Database connection (using Zend_Db)
 * Image Resizer
+* Mail system (using Zend_Mail)
