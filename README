@@ -5,6 +5,12 @@
 
 *****************************************************************
 
+Gregory is a simple and lightweight web framework. It help you build 
+small and medium website by providing core functionalities like url 
+routing, templates, plugins system, and more. The core of Gregory is 
+a single file (Gregory.php) that can be used alone or you can add 
+plugins to enable more features.
+
 
 CONCEPTS
 ----------------
