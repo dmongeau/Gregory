@@ -43,23 +43,15 @@ $app->addPlugin('resizer/resizer.php',array(
 
 
 $app->addRoute(array(
-	'/' => 'home.html',
+	'/' => 'home.php',
 	'/about.html' => array(
-		'page' => 'about.html'
+		'page' => 'about.php'
+	),
+	'/Gregory.php' => array(
+		'page' => 'gregory.php'
 	),
 	'/contact.html' => array(
 		'page' => 'contact.php'
-	),
-	'/server.amf' => array(
-		'page' => 'amf/amf.php',
-		'layout' => false
-	),
-	'/amf/test.html' =>  array(
-		'page' => 'amf/test.html',
-		'layout' => false
-	),
-	'/amf/:pid.html' =>  array(
-		'page' => 'test.php'
 	),
 ));
 
