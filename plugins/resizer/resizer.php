@@ -49,7 +49,8 @@ function resizer_route($route) {
 		'q' => 'quality',
 		'cw' => 'crop_width',
 		'ch' => 'crop_height',
-		'r' => 'resize'
+		's' => 'scale',
+		'r' => 'rotation'
 	);
 	
 	$file = null;

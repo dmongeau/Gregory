@@ -107,7 +107,7 @@ class ImageResizer {
 		// Determine the quality of the output image
 		$quality	= (isset($opts['quality'])) ? (int)$opts['quality']:$config['quality'];
 		
-		$resizeFactor = (isset($opts['resize']) && (float)$opts['resize'] != 0) ? (float)$opts['resize']:1;
+		$resizeFactor = (isset($opts['scale']) && (float)$opts['scale'] != 0) ? (float)$opts['scale']:1;
 		
 		if(isset($opts['crop']) && sizeof($cropRatio) == 2) {
 			$dst = imagecreatetruecolor($cropRatio[0]*$resizeFactor, $cropRatio[1]*$resizeFactor);
@@ -240,6 +240,10 @@ class ImageResizer {
 					imagesetpixel($dst,$x,$y,$palette[$gs]);
 				}
 			} 
+		}
+		
+		if(isset($opts['rotation']) && !empty($opts['rotation'])) {
+			$dst = imagerotate($dst, (float)$opts['rotation'], 0) ;
 		}
 		
 		
@@ -378,3 +382,74 @@ if(!function_exists('imageconvolution')){
 	}
 	
 } 
+
+
+
+
+
+
+
+/*
+ *
+ * imagerotate function (if not present)
+ *
+ *
+ */
+if(!function_exists("imagerotate")) {
+	function imagerotate($src_img, $angle) {
+		
+		if (!imageistruecolor($src_img)) {
+			$w = imagesx($src_img);
+			$h = imagesy($src_img);
+			$t_im = imagecreatetruecolor($w,$h);
+			imagecopy($t_im,$src_img,0,0,0,0,$w,$h);
+			$src_img = $t_im;
+		}
+		
+		$src_x = imagesx($src_img);
+		$src_y = imagesy($src_img);
+		if ($angle == 180) {
+			$dest_x = $src_x;
+			$dest_y = $src_y;
+		} elseif ($src_x <= $src_y) {
+			$dest_x = $src_y;
+			$dest_y = $src_x;
+		} elseif ($src_x >= $src_y) {
+			$dest_x = $src_y;
+			$dest_y = $src_x;
+		}
+		
+		$rotate=imagecreatetruecolor($dest_x,$dest_y);
+		imagealphablending($rotate, false);
+		
+		switch($angle) {
+			case 270:
+				for ($y = 0; $y < ($src_y); $y++) {
+					for ($x = 0; $x < ($src_x); $x++) {
+						$color = imagecolorat($src_img, $x, $y);
+						imagesetpixel($rotate, $dest_x - $y - 1, $x, $color);
+					}
+				}
+			break;
+			case 90:
+				for ($y = 0; $y < ($src_y); $y++) {
+					for ($x = 0; $x < ($src_x); $x++) {
+						$color = imagecolorat($src_img, $x, $y);
+						imagesetpixel($rotate, $y, $dest_y - $x - 1, $color);
+					}
+				}
+			break;
+			case 180:
+				for ($y = 0; $y < ($src_y); $y++) {
+					for ($x = 0; $x < ($src_x); $x++) {
+						$color = imagecolorat($src_img, $x, $y);
+						imagesetpixel($rotate, $dest_x - $x - 1, $dest_y - $y - 1,$color);
+					}
+				}
+			break;
+			default: $rotate = $src_img;
+		};
+		
+		return $rotate;
+	}
+}
