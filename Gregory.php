@@ -22,9 +22,7 @@ class Gregory {
 	protected static $_initialized = false;
 	protected static $_sharedMemory;
 	protected static $_paths;
-	
-	protected $_bootstrapped = false;
-	protected $_config = array(
+	public static $defaultConfig = array(
 		'layout' => null,
 		'path' => array(
 			'pages' => null,
@@ -43,6 +41,10 @@ class Gregory {
 			'500' => null
 		),
 	);
+	
+	
+	protected $_bootstrapped = false;
+	protected $_config = array();
 	
 	protected $_route;
 	protected $_routes = array();
@@ -71,7 +73,7 @@ class Gregory {
 			
 			$this->_setStats('startTime',(float) array_sum(explode(' ',microtime())));
 			
-			$this->setConfig(array_merge($this->_config,$config));
+			$this->setConfig(array_merge(self::$defaultConfig,$config));
 			
 			self::init();
 			

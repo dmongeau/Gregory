@@ -1,1 +1,0 @@
-﻿package {	public class CustomClient	{		 public function CustomClient():void		 {					 }		 		 public function TestHeader(content:String):void		 {			  trace("Got header with content:" + content);		 }	}}
