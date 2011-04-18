@@ -122,7 +122,7 @@ class Gregory {
 			
 			//Route
 			if($this->hasRoutes()) {
-				$route = $this->route($_SERVER['REQUEST_URI']);
+				$route = $this->route($url);
 				$this->setRoute($route);
 				$params = array();
 				if(is_array($route) && sizeof($route['route'])) {

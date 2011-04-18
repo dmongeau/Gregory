@@ -9,6 +9,8 @@ try {
 	$db = Zend_Db::factory($adapter,$config);
 	$db->getConnection();
 } catch (Zend_Db_Adapter_Exception $e) {
+	var_dump($e);
+	exit();
 	throw new Exception("Erreur de connexion à la base de données",500);
 } catch (Zend_Exception $e) {
 	throw new Exception("Erreur d'initialisation de la base de données",500);
