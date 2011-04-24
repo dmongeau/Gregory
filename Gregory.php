@@ -258,12 +258,15 @@ class Gregory {
 		$page = $this->dofilter('run.page',$this->getPage());
 		$errors = $this->getErrors();
 		
-		$data = array('errors'=>array());
+		$data = $this->getData();
+		$data['errors'] = array();
 		foreach($errors as $error) $data['errors'][] = $error->getMessage();
 		
 		ob_start();
 		include	$page;
 		$content = ob_get_clean();
+		
+		$data = array_merge($data,$this->getData());
 		
 		if(isset($content) && !empty($content)) {
 			$content = self::template($content,$data);
