@@ -262,9 +262,7 @@ class Gregory {
 		$data['errors'] = array();
 		foreach($errors as $error) $data['errors'][] = $error->getMessage();
 		
-		ob_start();
-		include	$page;
-		$content = ob_get_clean();
+		$content = self::renderFile($page,array('data'=>$data));
 		
 		$data = array_merge($data,$this->getData());
 		
@@ -272,6 +270,18 @@ class Gregory {
 			$content = self::template($content,$data);
 			$this->setContent($this->dofilter('run.content',$content));
 		}	
+	}
+	
+	public function renderFile($file,$vars = array()) {
+		
+		if(sizeof($vars) && is_array($vars)) extract($vars);
+		
+		ob_start();
+		include	$file;
+		$content = ob_get_clean();
+		
+		return $content;
+		
 	}
 	
 	public function getHead() {
@@ -739,9 +749,7 @@ class Gregory {
 	
 	public static function template($layout, $data = array(),$clean = true) {
 		if(strlen($layout) < 1024 && file_exists($layout)) {
-			ob_start();
-			include $layout;
-			$layout = ob_get_clean();	
+			$layout = Gregory::get()->renderFile($layout);
 		}
 		$html = $layout;
 		if(isset($data) && is_array($data)) {
