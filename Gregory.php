@@ -815,7 +815,7 @@ class Gregory {
 		if(strtolower(substr($class,0,4)) == 'zend') {
 			$file = '/'.$path.'/'.str_replace('_','/',$class).'.php';
 			if (!file_exists($file)) return false;
-			require $file;
+			require_once $file;
 		} else {
 			return false;
 		}	

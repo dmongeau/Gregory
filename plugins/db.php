@@ -3,7 +3,7 @@
 $adapter = $config["adapter"];
 $config = $config["config"];
 
-require 'Zend/Db.php';
+require_once 'Zend/Db.php';
 
 try {
 	$db = Zend_Db::factory($adapter,$config);
