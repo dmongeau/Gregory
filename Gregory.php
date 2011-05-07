@@ -274,11 +274,8 @@ class Gregory {
 	public function runPage() {
 		
 		$page = $this->dofilter('run.page',$this->getPage());
-		$errors = $this->getErrors();
 		
 		$data = $this->getData();
-		$data['errors'] = array();
-		foreach($errors as $error) $data['errors'][] = $error->getMessage();
 		
 		$content = self::renderFile($page,array('data'=>$data));
 		
