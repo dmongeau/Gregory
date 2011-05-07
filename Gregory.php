@@ -50,7 +50,7 @@ class Gregory {
 	protected $_routes = array();
 	protected $_params = array();
 	
-	protected $_errors = array();
+	protected $_errors = null;
 	protected $_stats = array();
 	
 	protected $_actions;
@@ -83,7 +83,7 @@ class Gregory {
 			
 			
 			//Retrieve errors from session
-			$this->_errors = $_SESSION['gregory_errors'];
+			$this->_errors = isset($_SESSION['gregory_errors']) ? $_SESSION['gregory_errors']:null;
 			
 			
 			//Initialize static Gregory
@@ -619,6 +619,9 @@ class Gregory {
 		);
 		if($type) $error['type'] = $type;
 		if($exception) $error['exception'] = $exception;
+		
+		if(!isset($this->_errors)) $this->_errors = array();
+		if(!isset($_SESSION['gregory_errors'])) $_SESSION['gregory_errors'] = array();
 		
 		$this->_errors[] = $error;
 		$_SESSION['gregory_errors'][] = $error;
