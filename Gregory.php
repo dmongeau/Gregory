@@ -69,14 +69,28 @@ class Gregory {
 	public function __construct($config = array()) {
 		
 		try {
+			
+			//Put instance in static property
 			self::set($this);
 			
+			
+			//Execution time
 			$this->_setStats('startTime',(float) array_sum(explode(' ',microtime())));
 			
+			
+			//Set global configuration
 			$this->setConfig(array_merge(self::$defaultConfig,$config));
 			
+			
+			//Retrieve errors from session
+			$this->_errors = $_SESSION['gregory_errors'];
+			
+			
+			//Initialize static Gregory
 			self::init();
 			
+			
+			//Update usage stats
 			$this->_refreshUsageStats();
 			
 		} catch(Exception $e) {
@@ -91,7 +105,11 @@ class Gregory {
 		try {
 		
 			if(!self::$_initialized) {
+				
+				
 				self::_bootstrapSharedMemory();
+				
+				
 				self::$_initialized = true;
 			}
 		
@@ -580,27 +598,43 @@ class Gregory {
 	
 	/*
      *
-     * System errors
+     * Errors handling
      *
      */
-	
-	/*
-	 * TODO : Better error handling
-	 */
 	
 	public function catchError($exception) {
 		
 		if(is_a($exception,'Zend_Exception') || $exception->getCode() == 500) {
 			$this->error(500);
 		} else {
-			$this->_errors[] = $exception;
+			$this->addError($exception->getMessage(), $exception->getCode(), $exception);
 		}
 		
 	}
 	
-	public function getErrors() {
+	public function addError($error, $type = null, $exception = null) {
 		
-		return $this->_errors;
+		$error = array(
+			'message' => $error
+		);
+		if($type) $error['type'] = $type;
+		if($exception) $error['exception'] = $exception;
+		
+		$this->_errors[] = $error;
+		$_SESSION['gregory_errors'][] = $error;
+		
+	}
+	
+	public function getErrors($cleanAfter = true) {
+		
+		$errors = $this->_errors;
+		
+		if($cleanAfter) {
+			$this->_errors = array();
+			$_SESSION['gregory_errors'] = array();
+		}
+		
+		return $errors;
 		
 	}
 	
