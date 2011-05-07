@@ -40,27 +40,23 @@ class UserAuth {
 		$authAdapter->setIdentity($email);
 		$authAdapter->setCredential($password);
 		
+		Gregory::doAction('auth_login',array($email,$password));
+		
 		$result = $this->_auth->authenticate($authAdapter);
 		if ($result->isValid()) {
-			//Zend_Session::regenerateId();
+			
 			$data = $authAdapter->getResultRowObject(null, $config['passwordColumn']);
 			
-			$update = array();
-			if(isset($data->logins)) $update['logins'] = (int)$data->logins + 1;
-			if(isset($data->datelogin)) $update['datelogin'] = date('Y-m-d H:i:s');
-			if(isset($data->datelastlogin) && isset($data->datelogin) && strtotime($data->datelogin) > 0) {
-				$update['datelastlogin'] = $data->datelogin;
-			}
-			if(isset($update) && sizeof($update)) {
-				Gregory::get()->db->update('users',$update,App::get()->db->quoteInto('uid = ?',$data->uid));
-			}
+			Gregory::doAction('auth_login_valid',array($data));
 			
 			$this->_auth->getStorage()->write($data);
 			if($this->_auth->hasIdentity()) $this->setIdentity($this->_auth->getIdentity());
 
 		} else {
 			
-			throw new Exception("Mauvais courriel ou mot de passe.");
+			Gregory::doAction('auth_login_invalid',array($email,$password));
+			
+			throw new Exception($config['errors']['invalid']);
 			
 		}
 		
@@ -69,7 +65,7 @@ class UserAuth {
 			foreach($config['block'] as $key => $value) {
 				if(isset($identity->$key) && $identity->$key == $value) {
 					$this->logout();
-					throw new Exception("Votre compte est désactivé");
+					throw new Exception($config['errors']['blocked']);
 				}
 			}
 		}
@@ -79,6 +75,9 @@ class UserAuth {
 	}
 	
 	public function logout() {
+		
+		Gregory::doAction('auth_logout',array($this->getIdentity()));
+		
 		$this->_auth->clearIdentity();
 		if(isset($this->identity->sessions)) $this->identity->sessions->unsetAll();
 		$this->identity = null;
@@ -109,15 +108,6 @@ class UserAuth {
 	public function isLogged() {
 		return $this->hasIdentity();
 	}
-	public function isAdmin() {
-		$identity = $this->getIdentity();
-		return (isset($identity->role) && ($identity->role == 'admin' || $identity->role == 'root')) ? true:false;
-	}
-	public function isRoot() {
-		$identity = $this->getIdentity();
-		return (isset($identity['role']) && $identity['role'] == 'root') ? true:false;
-	}
-	
 	
 	public function passwordHash($pwd) {
 		
