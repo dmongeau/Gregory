@@ -40,34 +40,34 @@ class UserAuth {
 		$authAdapter->setIdentity($email);
 		$authAdapter->setCredential($password);
 		
-		Gregory::doAction('auth_login',array($email,$password));
+		Gregory::get()->doAction('auth_login',array($email,$password));
 		
 		$result = $this->_auth->authenticate($authAdapter);
 		if ($result->isValid()) {
 			
 			$data = $authAdapter->getResultRowObject(null, $config['passwordColumn']);
 			
-			Gregory::doAction('auth_login_valid',array($data));
-			
 			$this->_auth->getStorage()->write($data);
 			if($this->_auth->hasIdentity()) $this->setIdentity($this->_auth->getIdentity());
+		
+			if($this->hasIdentity() && isset($config['block'])) {
+				$identity  = $this->getIdentity();
+				foreach($config['block'] as $key => $value) {
+					if(isset($identity->$key) && $identity->$key == $value) {
+						$this->logout();
+						throw new Exception($config['errors']['blocked']);
+					}
+				}
+			}
+			
+			Gregory::get()->doAction('auth_login_valid',array($data));
 
 		} else {
 			
-			Gregory::doAction('auth_login_invalid',array($email,$password));
+			Gregory::get()->doAction('auth_login_invalid',array($email,$password));
 			
 			throw new Exception($config['errors']['invalid']);
 			
-		}
-		
-		if($this->hasIdentity() && isset($config['block'])) {
-			$identity  = $this->getIdentity();
-			foreach($config['block'] as $key => $value) {
-				if(isset($identity->$key) && $identity->$key == $value) {
-					$this->logout();
-					throw new Exception($config['errors']['blocked']);
-				}
-			}
 		}
 			
 		return $this->getIdentity();
@@ -76,7 +76,7 @@ class UserAuth {
 	
 	public function logout() {
 		
-		Gregory::doAction('auth_logout',array($this->getIdentity()));
+		Gregory::get()->doAction('auth_logout',array($this->getIdentity()));
 		
 		$this->_auth->clearIdentity();
 		if(isset($this->identity->sessions)) $this->identity->sessions->unsetAll();
