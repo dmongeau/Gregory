@@ -641,6 +641,26 @@ class Gregory {
 		
 	}
 	
+	public function displayErrors($cleanAfter = true) {
+		
+		$errors = $this->getErrors($cleanAfter);
+		
+		$html = array();
+		foreach($errors as $error) {
+			$html[] = $error['message'];
+		}
+		
+		return '<ul>'.implode('',$html).'</ul>';
+		
+	}
+	
+	public function hasErrors() {
+		
+		if(isset($this->_errors) && sizeof($this->_errors)) return true;
+		else return false;
+		
+	}
+	
 	public function error($code = 500) {
 		
 		$this->doAction('error.'.$code);
