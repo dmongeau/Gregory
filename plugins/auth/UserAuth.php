@@ -31,7 +31,6 @@ class UserAuth {
 		$email = stripslashes($email);
 		$password = stripslashes($password);
 		
-		Zend_Loader::loadClass('Zend_Auth_Adapter_DbTable');
 		$authAdapter = new Zend_Auth_Adapter_DbTable(Gregory::get()->db,$config['table'],$config['identityColumn'],$config['passwordColumn']);
 		
 		if(!$passwordEncoded) $password = $this->passwordHash($password);

@@ -83,7 +83,7 @@ class Gregory {
 			
 			
 			//Retrieve errors from session
-			$this->_errors = isset($_SESSION['gregory_errors']) ? $_SESSION['gregory_errors']:null;
+			$this->_errors = $this->session('errors');
 			
 			
 			//Initialize static Gregory
@@ -618,10 +618,9 @@ class Gregory {
 		if($exception) $error['exception'] = $exception;
 		
 		if(!isset($this->_errors)) $this->_errors = array();
-		if(!isset($_SESSION['gregory_errors'])) $_SESSION['gregory_errors'] = array();
 		
 		$this->_errors[] = $error;
-		$_SESSION['gregory_errors'][] = $error;
+		$this->session('errors',$this->_errors);
 		
 	}
 	
@@ -631,7 +630,7 @@ class Gregory {
 		
 		if($cleanAfter) {
 			$this->_errors = array();
-			$_SESSION['gregory_errors'] = array();
+			$this->session('errors',null);
 		}
 		
 		return $errors;
@@ -647,7 +646,7 @@ class Gregory {
 			$html[] = $error['message'];
 		}
 		
-		return '<ul>'.implode('',$html).'</ul>';
+		return '<ul>'.implode("\n",$html).'</ul>';
 		
 	}
 	
@@ -888,6 +887,36 @@ class Gregory {
 	}
 	
 	
+	/*
+     *
+     * Gregory session
+     *
+     */
+	
+	
+	public function session($key) {
+		
+		if(class_exists('Zend_Session')) Zend_Session::start();
+		else session_start();
+		
+		if(func_num_args() == 2) {
+			if(class_exists('Zend_Session')) {
+				$session = new Zend_Session_Namespace('Gregory');
+				$session->$key = func_get_arg(1);
+			} else {
+				$_SESSION['Gregory_'.$key] = func_get_arg(1);
+			}
+		} else {
+			if(class_exists('Zend_Session')) {
+				$session = new Zend_Session_Namespace('Gregory');
+				return isset($session->$key) ? $session->$key:null;
+			} else {
+				return isset($_SESSION['Gregory_'.$key]) ? $_SESSION['Gregory_'.$key]:null;
+			}
+		}
+		
+	}
+	
 	
 	
 	/*
@@ -896,22 +925,23 @@ class Gregory {
      *
      */
 	
-	
-
 	public static function _autoload($class) {
 		
-		//Zend Framework
-		$paths = array();
-		if(defined(PATH_ZEND)) $paths[] = PATH_ZEND;
-		$path = Gregory::absolutePath('Zend/', $paths);
-		
-		if($path) $path = trim(str_replace('/Zend', '', $path), '/');
-		else return false;
-		
 		if(strtolower(substr($class,0,4)) == 'zend') {
+		
+			/*//Zend Framework
+			$paths = array();
+			if(defined(PATH_ZEND)) $paths[] = PATH_ZEND;
+			$path = Gregory::absolutePath('Zend/', $paths);
+			
+			if($path) $path = trim(str_replace('/Zend', '', $path), '/');
+			else return false;
+			
 			$file = '/'.$path.'/'.str_replace('_','/',$class).'.php';
-			if (!file_exists($file)) return false;
+			if (!file_exists($file)) return false;*/
+			$file = str_replace('_','/',$class).'.php';
 			require_once $file;
+			
 		} else {
 			return false;
 		}	
