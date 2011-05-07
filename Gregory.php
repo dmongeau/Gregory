@@ -819,6 +819,20 @@ class Gregory {
 			
 	}
 	
+	public static function JSON($obj, $return = false) {
+		
+		$json = json_encode($obj);
+		
+		if(!$return) {
+			header('Content-type: text/plain; charset="utf-8"',true);
+			echo $json;
+			exit();
+		} else {
+			return $json;
+		}
+			
+	}
+	
 	
 	
 	
