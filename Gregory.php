@@ -543,11 +543,13 @@ class Gregory {
 		
 	}
 	
-    public function doAction($action) {
+    public function doAction($action,$params = array()) {
 		if(isset($this->_actions[$action])) {
 			foreach($this->_actions[$action] as $a) {
-				if(sizeof($a['params'])) {
-					call_user_func_array($a['function'],$a['params']);
+				//if(sizeof($a['params'])) {
+					//call_user_func_array($a['function'],$a['params']);
+				if(sizeof($params)) {
+					call_user_func_array($a['function'],$params);
 				} else {
 					call_user_func_array($a['function'],array());
 				}
@@ -792,6 +794,32 @@ class Gregory {
 		}
 		return false;
     }
+	
+	
+	/*
+     *
+     * Request functions
+     *
+     */
+	
+	public static function redirect($url, $code = 301) {
+		
+		header('Location: '.$url,true,$code);
+		exit();
+			
+	}
+	
+	public static function isAJAX() {
+		
+		if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+			return true;
+		}
+		
+		return false;
+			
+	}
+	
+	
 	
 	
 	/*
