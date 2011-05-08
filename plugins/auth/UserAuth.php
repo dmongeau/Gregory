@@ -39,7 +39,7 @@ class UserAuth {
 		$authAdapter->setIdentity($email);
 		$authAdapter->setCredential($password);
 		
-		Gregory::get()->doAction('auth_login',array($email,$password));
+		Gregory::get()->doAction('auth.login',array($email,$password));
 		
 		$result = $this->_auth->authenticate($authAdapter);
 		if ($result->isValid()) {
@@ -59,11 +59,11 @@ class UserAuth {
 				}
 			}
 			
-			Gregory::get()->doAction('auth_login_valid',array($data));
+			Gregory::get()->doAction('auth.login.valid',array($data));
 
 		} else {
 			
-			Gregory::get()->doAction('auth_login_invalid',array($email,$password));
+			Gregory::get()->doAction('auth.login.invalid',array($email,$password));
 			
 			throw new Exception($config['errors']['invalid']);
 			
@@ -75,7 +75,7 @@ class UserAuth {
 	
 	public function logout() {
 		
-		Gregory::get()->doAction('auth_logout',array($this->getIdentity()));
+		Gregory::get()->doAction('auth.logout',array($this->getIdentity()));
 		
 		$this->_auth->clearIdentity();
 		if(isset($this->identity->sessions)) $this->identity->sessions->unsetAll();

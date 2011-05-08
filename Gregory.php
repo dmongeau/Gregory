@@ -1,21 +1,32 @@
 <?php
-
-/*
+/**
  *
  * Gregory.php
  *
  * Single file webapp framework written in PHP
- *
  * http://gentlegreg.org
- *
- * @version 0.1
  * @author David Mongeau-Petitpas <dmp@commun.ca>
+ * @package Gregory
+ * @version 0.1
  *
  */
 
+/**
+ *
+ * Path where the Gregory.php file is located
+ *
+ */
 define('PATH_GREGORY',dirname(__FILE__));
 
-
+/**
+ *
+ * Class Gregory
+ *
+ * Singleton for the core of Gregory
+ * @package Gregory
+ * @version 0.1
+ *
+ */
 class Gregory {
 	
 	protected static $_app;
@@ -211,9 +222,9 @@ class Gregory {
 		}
 	}
 	
-	/*
+	/**
 	 *
-	 * Config
+	 * Update Gregory config
 	 *
 	 */
 	public function setConfig($config, $value = null) {
@@ -222,6 +233,11 @@ class Gregory {
 		
 	}
 	
+	/**
+	 *
+	 * Get Gregory config
+	 *
+	 */
 	public function getConfig($key = null) {
 		if(!isset($key)) return $this->_config;
 		elseif(isset($this->_config[$key])) return $this->_config[$key];
@@ -238,9 +254,9 @@ class Gregory {
 	}
 	
 	
-	/*
+	/**
 	 *
-	 * Page
+	 * Set current page file
 	 *
 	 */
 	public function setPage($page, $run = false) {
@@ -250,14 +266,29 @@ class Gregory {
 		if($run) $this->runPage();
 	}
 	
+	/**
+	 *
+	 * Get current page file
+	 *
+	 */
 	public function getPage() {
 		return $this->_page;
 	}
 	
+	/**
+	 *
+	 * Set content
+	 *
+	 */
 	public function setContent($content) {
 		$this->_content = $content;
 	}
 	
+	/**
+	 *
+	 * Get content
+	 *
+	 */
 	public function getContent() {
 		return $this->_content;
 	}
@@ -271,6 +302,11 @@ class Gregory {
 		return $this->_data;
 	}
 	
+	/**
+	 *
+	 * Execute the php scrit of the current page
+	 *
+	 */
 	public function runPage() {
 		
 		$page = $this->dofilter('run.page',$this->getPage());
@@ -476,6 +512,39 @@ class Gregory {
     }
 	
 	
+	
+	
+	/*
+     *
+     * Gregory session
+     *
+     */
+	
+	
+	public function session($key) {
+		
+		if(class_exists('Zend_Session')) Zend_Session::start();
+		else session_start();
+		
+		if(func_num_args() == 2) {
+			if(class_exists('Zend_Session')) {
+				$session = new Zend_Session_Namespace('Gregory');
+				$session->$key = func_get_arg(1);
+			} else {
+				$_SESSION['Gregory_'.$key] = func_get_arg(1);
+			}
+		} else {
+			if(class_exists('Zend_Session')) {
+				$session = new Zend_Session_Namespace('Gregory');
+				return isset($session->$key) ? $session->$key:null;
+			} else {
+				return isset($_SESSION['Gregory_'.$key]) ? $_SESSION['Gregory_'.$key]:null;
+			}
+		}
+		
+	}
+	
+	
 	 /*
      *
      * Méthodes relatives aux plugins
@@ -643,7 +712,7 @@ class Gregory {
 		
 		$html = array();
 		foreach($errors as $error) {
-			$html[] = $error['message'];
+			$html[] = '<li>'.$error['message'].'</li>';
 		}
 		
 		return '<ul>'.implode("\n",$html).'</ul>';
@@ -884,37 +953,6 @@ class Gregory {
 			return $json;
 		}
 			
-	}
-	
-	
-	/*
-     *
-     * Gregory session
-     *
-     */
-	
-	
-	public function session($key) {
-		
-		if(class_exists('Zend_Session')) Zend_Session::start();
-		else session_start();
-		
-		if(func_num_args() == 2) {
-			if(class_exists('Zend_Session')) {
-				$session = new Zend_Session_Namespace('Gregory');
-				$session->$key = func_get_arg(1);
-			} else {
-				$_SESSION['Gregory_'.$key] = func_get_arg(1);
-			}
-		} else {
-			if(class_exists('Zend_Session')) {
-				$session = new Zend_Session_Namespace('Gregory');
-				return isset($session->$key) ? $session->$key:null;
-			} else {
-				return isset($_SESSION['Gregory_'.$key]) ? $_SESSION['Gregory_'.$key]:null;
-			}
-		}
-		
 	}
 	
 	
