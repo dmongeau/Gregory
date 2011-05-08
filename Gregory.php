@@ -71,6 +71,7 @@ class Gregory {
 	protected $_pluginsBootstrap = array();
 	protected $_pluginsStandby = array();
 	
+	protected $_layout;
 	protected $_page;
 	protected $_data = array();
 	protected $_head;
@@ -90,7 +91,11 @@ class Gregory {
 			
 			
 			//Set global configuration
-			$this->setConfig(array_merge(self::$defaultConfig,$config));
+			$config = array_merge(self::$defaultConfig,$config);
+			$this->setConfig($config);
+			if($this->getConfig('layout')) {
+				$this->setLayout($this->getConfig('layout'));
+			}
 			
 			
 			//Retrieve errors from session
@@ -162,7 +167,7 @@ class Gregory {
 					}
 					
 					if(isset($route['route']['layout'])) {
-						$this->setConfig('layout', $route['route']['layout']);
+						$this->setLayout($route['route']['layout']);
 					}
 					
 					if(isset($route['route']['function'])) {
@@ -203,7 +208,7 @@ class Gregory {
 			$content = $this->dofilter('render.content',$this->getContent());
 			
 			
-			if($layout = $this->getConfig('layout')) {
+			if($layout = $this->getLayout()) {
 				$content = self::template($layout,array('content'=>$content),false);
 				$content = self::template($content,$data);
 			}
@@ -280,8 +285,8 @@ class Gregory {
 	 * Set content
 	 *
 	 */
-	public function setContent($content) {
-		$this->_content = $content;
+	public function setContent($value) {
+		$this->_content = $value;
 	}
 	
 	/**
@@ -291,6 +296,24 @@ class Gregory {
 	 */
 	public function getContent() {
 		return $this->_content;
+	}
+	
+	/**
+	 *
+	 * Set Layout
+	 *
+	 */
+	public function setLayout($value) {
+		$this->_layout = $value;
+	}
+	
+	/**
+	 *
+	 * Get Layout
+	 *
+	 */
+	public function getLayout() {
+		return $this->_layout;
 	}
 	
 	public function setData($data, $value = null) {
