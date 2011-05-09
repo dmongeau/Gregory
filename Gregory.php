@@ -40,6 +40,7 @@ class Gregory {
 			'plugins' => null
 		),
 		'route' => array(
+			'path' => '/',
 			'wildcard' => '*',
 			'urlDelimiter' => '/',
 			'paramsPrefix' => ':'
@@ -66,6 +67,8 @@ class Gregory {
 	
 	protected $_actions;
 	protected $_filters;
+	
+	protected $_bootstraps = array();
 	
 	protected $_plugins = array();
 	protected $_pluginsBootstrap = array();
@@ -139,6 +142,10 @@ class Gregory {
 		
 		try {
 			$this->_bootstrapPlugins();
+			
+			foreach($this->_bootstraps as $bootstrap) {
+				include $bootstrap;	
+			}
 			
 			$this->doAction('bootstrap');
 			$this->_bootstrapped = true;
@@ -410,8 +417,21 @@ class Gregory {
 			
 		$routes = $this->getRoutes();
 		$delimiter = $this->getConfig('route.urlDelimiter');
+		
 		$url = strpos($url,'?') !== false ? substr($url,0,strpos($url,'?')):$url;
 		$url = trim($url,$delimiter);
+		
+		$path = $this->getConfig('route.path');
+		
+		if(isset($path) && $path != $delimiter) {
+			$path = trim($path,$delimiter);
+			if(!empty($path) && substr($url.$delimiter,0,strlen($path)+1) == $path.$delimiter) {
+				$url = substr($url.'/',	strlen($path));
+				$url = trim($url,$delimiter);
+			}
+			
+		}
+		
 		$urlParts = explode($delimiter,$url);
 		
 		if(isset($routes) && sizeof($routes)) {
@@ -564,6 +584,18 @@ class Gregory {
 				return isset($_SESSION['Gregory_'.$key]) ? $_SESSION['Gregory_'.$key]:null;
 			}
 		}
+		
+	}
+	
+	
+	/**
+	 *
+	 * Update bootstrap file
+	 *
+	 */
+	public function addBootstrap($file) {
+		
+		if(file_exists($file)) $this->_bootstraps[] = $file;
 		
 	}
 	
