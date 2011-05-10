@@ -11,9 +11,13 @@ class Mail_Factory {
 		$this->from = $from;
 	}
 	
-	public function create($subject, $to) {
+	public function create($subject, $to, $from = null) {
 		
 		    $Mail = new Zend_Mail("utf-8");
+			
+			if(isset($from) && !empty($from)) {
+				$this->from = $from;
+			}
 			
 			if(isset($this->from)) {
 				if(is_array($this->from)) {

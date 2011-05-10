@@ -763,14 +763,20 @@ class Gregory {
 	
 	public function displayErrors($cleanAfter = true) {
 		
+		if(!$this->hasErrors()) return;
+		
 		$errors = $this->getErrors($cleanAfter);
 		
-		$html = array();
-		foreach($errors as $error) {
-			$html[] = '<li>'.$error['message'].'</li>';
+		if(sizeof($errors) > 1) {
+			$html = array();
+			foreach($errors as $error) {
+				$html[] = '<li>'.$error['message'].'</li>';
+			}
+			
+			return '<ul>'.implode("\n",$html).'</ul>';
+		} else {
+			return $errors[0]['message'];
 		}
-		
-		return '<ul>'.implode("\n",$html).'</ul>';
 		
 	}
 	
@@ -870,6 +876,8 @@ class Gregory {
 	 *
 	 */
 	protected static function _bootstrapSharedMemory() {
+		
+		if(!function_exists('shm_attach') || !function_exists('sem_acquire')) return false;
 		
 		$key = ftok(__FILE__,'g');
 		self::$_sharedMemory = array(
