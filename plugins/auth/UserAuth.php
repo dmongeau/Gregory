@@ -6,8 +6,8 @@ class UserAuth {
 	
 	
 	protected $_config;
-	protected $_auth;
 	
+	public $auth;
 	public $identity;
 	
 	
@@ -15,10 +15,10 @@ class UserAuth {
 		
 		$this->setConfig($config);
 		
-		$this->_auth = Zend_Auth::getInstance();
+		$this->auth = Zend_Auth::getInstance();
 		
-		if($this->_auth->hasIdentity()) {
-			$identity = $this->_auth->getIdentity();
+		if($this->auth->hasIdentity()) {
+			$identity = $this->auth->getIdentity();
 			$this->setIdentity($identity);
 		}
 		
@@ -41,13 +41,13 @@ class UserAuth {
 		
 		Gregory::get()->doAction('auth.login',array($email,$password));
 		
-		$result = $this->_auth->authenticate($authAdapter);
+		$result = $this->auth->authenticate($authAdapter);
 		if ($result->isValid()) {
 			
 			$data = $authAdapter->getResultRowObject(null, $config['passwordColumn']);
 			
-			$this->_auth->getStorage()->write($data);
-			if($this->_auth->hasIdentity()) $this->setIdentity($this->_auth->getIdentity());
+			$this->auth->getStorage()->write($data);
+			if($this->auth->hasIdentity()) $this->setIdentity($this->auth->getIdentity());
 		
 			if($this->hasIdentity() && isset($config['block'])) {
 				$identity  = $this->getIdentity();
@@ -73,11 +73,20 @@ class UserAuth {
 		
 	}
 	
+	public function loginWithIdentity($identity) {
+		$identity = (object)$identity;
+		$this->auth->getStorage()->write($identity);
+		if($this->auth->hasIdentity()) {
+			$this->setIdentity($identity);
+			Gregory::get()->doAction('auth.login.valid',array($identity));
+		}
+	}
+	
 	public function logout() {
 		
 		Gregory::get()->doAction('auth.logout',array($this->getIdentity()));
 		
-		$this->_auth->clearIdentity();
+		$this->auth->clearIdentity();
 		if(isset($this->identity->sessions)) $this->identity->sessions->unsetAll();
 		$this->identity = null;
 	}
