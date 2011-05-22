@@ -146,7 +146,6 @@ class ImageResizer {
 		// Read in the original image
 		$src = $creationFunction($this->_filename);
 		
-		
 		if(in_array($this->_mime, array('image/gif', 'image/png'))) {
 			if(!$color) {
 				// If this is a GIF or a PNG, we need to set up transparency

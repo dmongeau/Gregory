@@ -1,6 +1,5 @@
 <?php
 
-require dirname(__FILE__).'/ImageResizer.php';
 
 /*
  *
@@ -12,8 +11,24 @@ $config = array_merge(array(
 	'cachePath' => dirname(__FILE__).'/_cache',
 	'quality' => 90,
 	'cache' => true,
-	'memory_limit' => '500M'
+	'memory_limit' => '500M',
+	'size' => array()
 ),$config);
+
+if(!isset($config['size']['thumb'])) {
+	$config['size']['thumb'] = array(
+		'width' => 50,
+		'height' => 50,
+		'ratio' => true
+	);
+}
+
+/*
+ *
+ * Load ImageResizer
+ *
+ */
+require dirname(__FILE__).'/ImageResizer.php';
 
 ImageResizer::setConfig($config);
 
@@ -70,6 +85,7 @@ function resizer_route($route) {
 			}
 		}
 		else if($part == 'f') $file = array();
+		else if(isset($config['size'][$part])) $options = array_merge($options,$config['size'][$part]);
 		 
 	}
 	if(!is_array($file)) return false;
