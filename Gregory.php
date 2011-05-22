@@ -438,7 +438,7 @@ class Gregory {
 			foreach($routes as $regex => $route) {
 				
 				$match = true;
-				$params = array();
+				$params = (isset($route['params']) && is_array($route['params'])) ? $route['params']:array();
 				
 				for($i = 0; $i < sizeof($route['parts']); $i++) {
 					
