@@ -88,6 +88,7 @@ function resizer_route($route) {
 		else if(isset($config['size'][$part])) $options = array_merge($options,$config['size'][$part]);
 		 
 	}
+	
 	if(!is_array($file)) return false;
 	else $file = Gregory::absolutePath(implode('/',$file),array($config['path']));
 	

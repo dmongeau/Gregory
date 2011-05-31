@@ -761,18 +761,18 @@ class Gregory {
 		
 	}
 	
-	public function displayErrors($cleanAfter = true) {
+	public function displayErrors($cleanAfter = true,$opts = array()) {
 		
 		if(!$this->hasErrors()) return;
 		
 		$errors = $this->getErrors($cleanAfter);
+		$opts = array_merge(array(
+			'alwaysList' => false
+		),$opts);
 		
-		if(sizeof($errors) > 1) {
+		if(sizeof($errors) > 1 || (sizeof($errors) == 1 && $opts['alwaysList'])) {
 			$html = array();
-			foreach($errors as $error) {
-				$html[] = '<li>'.$error['message'].'</li>';
-			}
-			
+			foreach($errors as $error) $html[] = '<li>'.$error['message'].'</li>';
 			return '<ul>'.implode("\n",$html).'</ul>';
 		} else {
 			return $errors[0]['message'];

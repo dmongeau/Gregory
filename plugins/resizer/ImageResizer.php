@@ -14,6 +14,11 @@ ini_set('gd.jpeg_ignore_warning', 1);
 ini_set('display_errors', 0);
 error_reporting(0);
 
+
+ini_set('gd.jpeg_ignore_warning', 0);
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 class ImageResizer {
 	
 	protected static $_config;
@@ -60,12 +65,11 @@ class ImageResizer {
 		if(isset($opts['color'])) $color = preg_replace('/[^0-9a-fA-F]/', '', (string)$opts['color']);
 		else $color = FALSE;
 
-		if (!$opts['width'] && $opts['height']) $opts['width']	= 99999999999999;
-		elseif ($opts['width'] && !$opts['height']) $opts['height'] = 99999999999999;
-		elseif ($color && !$opts['width'] && !$opts['height']) {
-			$opts['width']	= $width;
-			$opts['height']	= $height;
-		}
+		if ((!isset($opts['width']) || !$opts['width']) && isset($opts['height'])) $opts['width']	= 99999999999999;
+		elseif (isset($opts['width']) && (!isset($opts['height']) || !$opts['height'])) $opts['height'] = 99999999999999;
+		
+		if (!isset($opts['width'])) $opts['width'] = $width;
+		if (!isset($opts['height'])) $opts['height'] = $height;
 		
 		
 		$offsetX = 0;
