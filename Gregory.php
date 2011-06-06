@@ -608,25 +608,18 @@ class Gregory {
      */
     public function addPlugin($name, $config = array(), $standby = true) {
 		
-		$path = $this->getConfig('path.plugins');
-		
 		$plugin = array();
 		$plugin['name'] = strpos($name,'/') !== false ? substr($name,0,strpos($name,'/')):$name;
-		$plugin['file'] = self::absolutePath(self::nameToFilename($name),array($path));
 		$plugin['config'] = $config;
 		$name = $plugin['name'];
-		
-		if(!file_exists($plugin['file'])) {
-			return false;
-		}
 		
 		$plugin = $this->doFilter('plugin.add',$plugin);
 		
         if($standby) $this->_pluginsStandby[$name] = $plugin;
 		else if(!$this->_bootstrapped) $this->_pluginsBootstrap[$name] = $plugin;
 		else {
-			$plugin = include $plugin['file'];
-			$this->_plugins[$name] = $plugin;
+			$plugin = require $this->_getPluginPath($plugin['name']);
+			$this->_plugins[$plugin['name']] = $plugin;
 		}
 		
     }
@@ -646,7 +639,7 @@ class Gregory {
 	public function initPlugin($name) {
 		if(isset($this->_pluginsStandby[$name])) {
 			$config = $this->_pluginsStandby[$name]['config'];
-			$plugin = include $this->_pluginsStandby[$name]['file'];
+			$plugin = require $this->_getPluginPath($this->_pluginsStandby[$name]['name']);
 			unset($this->_pluginsStandby[$name]);
 			return $plugin;
 		}
@@ -658,11 +651,16 @@ class Gregory {
 		if(isset($this->_pluginsBootstrap) && sizeof($this->_pluginsBootstrap)) {
 			foreach($this->_pluginsBootstrap as $name => $plugin) {
 				$config = $this->_pluginsBootstrap[$name]['config'];
-				$plugin = include $plugin['file'];
+				$plugin = require $this->_getPluginPath($plugin['name']);
 				unset($this->_pluginsBootstrap[$name]);
 				$this->_plugins[$name] = $plugin;
 			}
 		}
+	}
+	
+	protected function _getPluginPath($name) {
+		$path = $this->getConfig('path.plugins');
+		return self::absolutePath(self::nameToFilename($name),array($path,$path.'/'.$name));	
 	}
 	
 	
