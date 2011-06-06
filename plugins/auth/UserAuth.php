@@ -46,6 +46,8 @@ class UserAuth {
 			
 			$data = $authAdapter->getResultRowObject(null, $config['passwordColumn']);
 			
+			$data = Gregory::get()->doFilter('auth.login.identity',$data);
+			
 			$this->auth->getStorage()->write($data);
 			if($this->auth->hasIdentity()) $this->setIdentity($this->auth->getIdentity());
 		

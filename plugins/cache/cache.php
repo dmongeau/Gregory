@@ -45,7 +45,10 @@ $manager = new Zend_Cache_Manager();
 
 foreach($config['cache'] as $cache => $cacheConfig) {
 	
-	$cacheConfig = array_merge_recursive($config['cacheTemplate'],$cacheConfig);
+	$conf = array_merge($config['cacheTemplate'],$cacheConfig);
+	if(!isset($cacheConfig['frontend']['options'])) $conf['frontend']['options'] = $config['cacheTemplate']['frontend']['options'];
+	else $conf['frontend']['options'] = array_merge($config['cacheTemplate']['frontend']['options'],$cacheConfig['frontend']['options']);
+	$cacheConfig = $conf;
 	if(!isset($cacheConfig['backend']['options']['cache_dir']) || empty($cacheConfig['backend']['options']['cache_dir'])) {
 		$path = $config['cacheDir'].'/'.$cache;
 		$cacheConfig['backend']['options']['cache_dir'] = $path;

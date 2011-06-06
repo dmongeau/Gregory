@@ -34,4 +34,8 @@ CORE PLUGINS
 ----------------
 * Database connection (using Zend_Db)
 * Image Resizer
+* Authentication (using Zend_Auth)
 * Mail system (using Zend_Mail)
+* Caching system (using Zend_Cache)
+* Facebook api
+* Twitter client (using Zend_Service_Twitter)
