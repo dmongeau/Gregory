@@ -119,6 +119,16 @@ class UserAuth {
 		return $this->hasIdentity();
 	}
 	
+	
+	public function isRole($role) {
+		if(!$this->isLogged() || !$this->hasIdentity()) return false;
+		$config = $this->getConfig();
+		if(!isset($config['roleColumn'])) return false;
+		$identity = $this->getIdentity();
+		$col = $config['roleColumn'];
+		return isset($identity->{$col}) && $identity->{$col} == $role ? true:false;
+	}
+	
 	public function passwordHash($pwd) {
 		
 		$config = $this->getConfig();
