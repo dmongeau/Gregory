@@ -17,8 +17,10 @@ try {
 }
 
 $encoding = isset($config["encoding"]) ? $config["encoding"]:'utf8';
+$timezone = isset($config["timezone"]) ? $config["timezone"]:'-4:00';
 
 $db->query("SET NAMES '".$encoding."'");
+$db->query("SET time_zone = '".$timezone."'");
 Zend_Db_Table::setDefaultAdapter($db);
 
 return $db;

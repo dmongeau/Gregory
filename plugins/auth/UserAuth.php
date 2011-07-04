@@ -46,6 +46,8 @@ class UserAuth {
 			
 			$data = $authAdapter->getResultRowObject(null, $config['passwordColumn']);
 			
+			$data = Gregory::get()->doFilter('auth.login.identity',$data);
+			
 			$this->auth->getStorage()->write($data);
 			if($this->auth->hasIdentity()) $this->setIdentity($this->auth->getIdentity());
 		
@@ -115,6 +117,16 @@ class UserAuth {
 	
 	public function isLogged() {
 		return $this->hasIdentity();
+	}
+	
+	
+	public function isRole($role) {
+		if(!$this->isLogged() || !$this->hasIdentity()) return false;
+		$config = $this->getConfig();
+		if(!isset($config['roleColumn'])) return false;
+		$identity = $this->getIdentity();
+		$col = $config['roleColumn'];
+		return isset($identity->{$col}) && $identity->{$col} == $role ? true:false;
 	}
 	
 	public function passwordHash($pwd) {

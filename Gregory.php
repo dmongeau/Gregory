@@ -63,6 +63,7 @@ class Gregory {
 	protected $_params = array();
 	
 	protected $_errors = null;
+	protected $_messages = array();
 	protected $_stats = array();
 	
 	protected $_actions;
@@ -100,10 +101,9 @@ class Gregory {
 				$this->setLayout($this->getConfig('layout'));
 			}
 			
-			
 			//Retrieve errors from session
 			$this->_errors = $this->session('errors');
-			
+			$this->_messages = $this->session('messages');
 			
 			//Initialize static Gregory
 			self::init();
@@ -141,6 +141,7 @@ class Gregory {
 	public function bootstrap($modules = array()) {
 		
 		try {
+			
 			$this->_bootstrapPlugins();
 			
 			foreach($this->_bootstraps as $bootstrap) {
@@ -358,7 +359,7 @@ class Gregory {
 		if(sizeof($vars) && is_array($vars)) extract($vars);
 		
 		ob_start();
-		include	$file;
+		require	$file;
 		$content = ob_get_clean();
 		
 		return $content;
@@ -607,25 +608,18 @@ class Gregory {
      */
     public function addPlugin($name, $config = array(), $standby = true) {
 		
-		$path = $this->getConfig('path.plugins');
-		
 		$plugin = array();
 		$plugin['name'] = strpos($name,'/') !== false ? substr($name,0,strpos($name,'/')):$name;
-		$plugin['file'] = self::absolutePath(self::nameToFilename($name),array($path));
 		$plugin['config'] = $config;
 		$name = $plugin['name'];
-		
-		if(!file_exists($plugin['file'])) {
-			return false;
-		}
 		
 		$plugin = $this->doFilter('plugin.add',$plugin);
 		
         if($standby) $this->_pluginsStandby[$name] = $plugin;
 		else if(!$this->_bootstrapped) $this->_pluginsBootstrap[$name] = $plugin;
 		else {
-			$plugin = include $plugin['file'];
-			$this->_plugins[$name] = $plugin;
+			$plugin = require $this->_getPluginPath($plugin['name']);
+			$this->_plugins[$plugin['name']] = $plugin;
 		}
 		
     }
@@ -645,7 +639,7 @@ class Gregory {
 	public function initPlugin($name) {
 		if(isset($this->_pluginsStandby[$name])) {
 			$config = $this->_pluginsStandby[$name]['config'];
-			$plugin = include $this->_pluginsStandby[$name]['file'];
+			$plugin = require $this->_getPluginPath($this->_pluginsStandby[$name]['name']);
 			unset($this->_pluginsStandby[$name]);
 			return $plugin;
 		}
@@ -657,11 +651,16 @@ class Gregory {
 		if(isset($this->_pluginsBootstrap) && sizeof($this->_pluginsBootstrap)) {
 			foreach($this->_pluginsBootstrap as $name => $plugin) {
 				$config = $this->_pluginsBootstrap[$name]['config'];
-				$plugin = include $plugin['file'];
+				$plugin = require $this->_getPluginPath($plugin['name']);
 				unset($this->_pluginsBootstrap[$name]);
 				$this->_plugins[$name] = $plugin;
 			}
 		}
+	}
+	
+	protected function _getPluginPath($name) {
+		$path = $this->getConfig('path.plugins');
+		return self::absolutePath(self::nameToFilename($name),array($path,$path.'/'.$name));	
 	}
 	
 	
@@ -715,6 +714,77 @@ class Gregory {
 		
 		return $input;
     }
+	
+	/*
+     *
+     * Messages system
+     *
+     */
+	public function addMessage($message, $category = 'default') {
+		
+		$this->_messages[$category][] = $message;
+		$this->session('messages',$this->_messages);
+		
+	}
+	
+	public function getMessages($clean = true) {
+		
+		$messages = array();
+		foreach($this->_messages as $category => $message) {
+			$messages[] = $message;
+		}
+		
+		if($clean) $this->cleanMessages();
+		
+		return $messages;
+		
+	}
+	
+	public function getMessagesByCategory($category,$clean = true) {
+		
+		$messages = array();
+		foreach($this->_messages[$category] as $message) {
+			$messages[] = $message;
+		}
+		
+		if($clean) $this->cleanMessages();
+		
+		return $messages;
+		
+	}
+	
+	public function hasMessages($category = null) {
+		
+		if(isset($category) && isset($this->_messages[$category]) && sizeof($this->_messages[$category])) return true;
+		else if(!isset($category) && isset($this->_messages) && sizeof($this->_messages)) return true;
+		else return false;
+		
+	}
+	
+	public function cleanMessages() {
+		$this->_messages = array();
+		$this->session('messages',null);	
+	}
+	
+	public function getMessagesAsHTML($category =  null, $clean = true,$opts = array()) {
+		
+		if(!$this->hasMessages()) return;
+		
+		$opts = array_merge(array(
+			'alwaysList' => false
+		),$opts);
+		
+		$items = isset($category) ? $this->getMessagesByCategory($category,$clean):$this->getMessages($clean);
+		
+		if(sizeof($items) > 1 || (sizeof($items) == 1 && $opts['alwaysList'])) {
+			$html = array();
+			foreach($items as $item) $html[] = '<li>'.$item.'</li>';
+			return '<ul>'.implode("\n",$html).'</ul>';
+		} else {
+			return $items[0];
+		}
+		
+	}
 	
 	
 	/*
