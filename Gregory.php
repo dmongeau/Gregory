@@ -672,6 +672,8 @@ class Gregory {
 			
 		$routes = $this->getRoutes();
 		$delimiter = $this->getConfig('route.urlDelimiter');
+		$paramPrefix = $this->getConfig('route.paramsPrefix');
+		$routeWildcard = $this->getConfig('route.wildcard');
 		
 		$url = strpos($url,'?') !== false ? substr($url,0,strpos($url,'?')):$url;
 		$url = trim($url,$delimiter);
@@ -693,7 +695,8 @@ class Gregory {
 			foreach($routes as $regex => $route) {
 				
 				$match = true;
-				$params = (isset($route['params']) && is_array($route['params'])) ? $route['params']:array();
+				if(isset($route['params']) && is_array($route['params'])) $params = $route['params'];
+				else $params = array();
 				
 				for($i = 0; $i < sizeof($route['parts']); $i++) {
 					
@@ -703,7 +706,7 @@ class Gregory {
 					
 					if(!isset($u)) {
 						$match = false;
-					} else if(substr($part,0,1) == $this->getConfig('route.paramsPrefix') && strlen($part) > 1) {
+					} else if(substr($part,0,1) == $paramPrefix && strlen($part) > 1) {
 						if(strpos($part,'.') !== false) {
 							$pos = strpos($u,'.');
 							if($pos === false) $match = false;
@@ -723,9 +726,9 @@ class Gregory {
 							$name = substr($part,1);
 							$params[$name] = $u;
 						}
-					} else if($part == $this->getConfig('route.wildcard')) {
+					} else if($part == $routeWildcard) {
 						$wildcard = array_slice($urlParts,$i);
-						$params['wildcard'] = implode($this->getConfig('route.urlDelimiter'),$wildcard);
+						$params['wildcard'] = implode($delimiter,$wildcard);
 						$wildcard = true;
 					} else if(!preg_match('/^'.preg_quote($part).'$/i',$u,$matches)) {
 						$match = false;
@@ -1009,9 +1012,11 @@ class Gregory {
 	
 	public function hasMessages($category = null) {
 		
-		if(isset($category) && isset($this->_messages[$category]) && sizeof($this->_messages[$category])) return true;
-		else if(!isset($category) && isset($this->_messages) && sizeof($this->_messages)) return true;
-		else return false;
+		if(isset($category) && isset($this->_messages[$category]) && sizeof($this->_messages[$category])) {
+			return true;
+		} else if(!isset($category) && isset($this->_messages) && sizeof($this->_messages)) {
+			return true;
+		} else return false;
 		
 	}
 	
@@ -1142,9 +1147,10 @@ class Gregory {
 	protected function _refreshUsageStats() {
 		//$this->_setStats('maxMemory',round(memory_get_peak_usage(true)/(1024*1024),2).' mb');
 		//$this->_setStats('maxMemory',memory_get_peak_usage(true).' mb');
+		$stats = $this->getStats();
 		$this->_setStats('maxMemory',round(memory_get_peak_usage()/1024,2).' kb');
 		$this->_setStats('endTime',(float) array_sum(explode(' ',microtime())));
-		$this->_setStats('executionTime',round(($this->getStats('endTime') - $this->getStats('startTime'))*1000,2).' msec.');
+		$this->_setStats('executionTime',round(($stats['endTime'] - $stats['startTime'])*1000,2).' msec.');
 	}
 	
 	public function getStats($key = null) {
