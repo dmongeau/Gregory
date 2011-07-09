@@ -3,8 +3,9 @@
  *
  * Gregory.php
  *
- * Single file webapp framework written in PHP
+ * Single file webapp framework written in PHP.
  * http://gentlegreg.org
+ *
  * @author David Mongeau-Petitpas <dmp@commun.ca>
  * @package Gregory
  * @version 0.1
@@ -13,7 +14,10 @@
 
 /**
  *
- * Path where the Gregory.php file is located
+ * Define the path where the Gregory.php file is located.
+ * This constants is used in the Gregory class.
+ *
+ * @name PATH_GREGORY
  *
  */
 define('PATH_GREGORY',dirname(__FILE__));
@@ -22,17 +26,72 @@ define('PATH_GREGORY',dirname(__FILE__));
  *
  * Class Gregory
  *
- * Singleton for the core of Gregory
+ * Main class for Gregory framework. The class should be instantiated and can be used statically
+ * to retrieve current instance from anywhere in your code.
+ *
+ * Minimal example
+ * <code>
+ * require Gregory.php;
+ * 
+ * $config = array(
+ *     'path' => array(
+ *         'pages' => dirname(__FILE__).'/pages'
+ *     )
+ * );
+ * $Gregory = new Gregory($config);
+ * 
+ * // Gregory will look for these php files in $config['path']['pages']
+ * $Gregory->addRoutes(array(
+ *    '/' => 'home.php',
+ *    '/about.html' => 'about.php'
+ * ));
+ * 
+ * $Gregory->boostrap();
+ * $Gregory->run();
+ * $Gregory->render();
+ * </code>
+ *
  * @package Gregory
  * @version 0.1
  *
  */
 class Gregory {
 	
+	/**
+	 * Static variable the contain the current instance of Gregory
+	 * @var Gregory
+	 * @access protected
+	 * @static
+	 */
 	protected static $_app;
+	/**
+	 * Boolean that indicate if Gregory has already been statically initialized
+	 * @var boolean
+	 * @access protected
+	 * @static
+	 */
 	protected static $_initialized = false;
+	/**
+	 * Shared memory
+	 * @access protected
+	 * @static
+	 */
 	protected static $_sharedMemory;
+	/**
+	 * Array that caches path for the absolutePath method
+	 * @var array
+	 * @access protected
+	 * @static
+	 */
 	protected static $_paths;
+	
+	
+	/**
+	 * Default configuration that is extended when you instantiate a new Gregory object
+	 * @var array
+	 * @access public
+	 * @static
+	 */
 	public static $defaultConfig = array(
 		'layout' => null,
 		'path' => array(
@@ -55,33 +114,141 @@ class Gregory {
 	);
 	
 	
+	/**
+	 * Boolean that indicates if the current instance of Gregory is initialized
+	 * @var boolean
+	 * @access protected
+	 */
 	protected $_bootstrapped = false;
+	/**
+	 * The config array for the current instance
+	 * @var array
+	 * @access protected
+	 */
 	protected $_config = array();
 	
+	
+	/**
+	 * Route for the current request
+	 * @var array
+	 * @access protected
+	 */
 	protected $_route;
+	/**
+	 * Routes for the current instance
+	 * @var array
+	 * @access protected
+	 */
 	protected $_routes = array();
+	/**
+	 * Params for the current request
+	 * @var array
+	 * @access protected
+	 */
 	protected $_params = array();
 	
+	
+	/**
+	 * Contains all the errors for to the current instance
+	 * @var array|null
+	 * @access protected
+	 */
 	protected $_errors = null;
+	/**
+	 * Contains all the messages for to the current instance
+	 * @var array
+	 * @access protected
+	 */
 	protected $_messages = array();
+	/**
+	 * Contains the statistics for the current instance
+	 * @var array
+	 * @access protected
+	 */
 	protected $_stats = array();
 	
+	
+	/**
+	 * Contains all actions (hooks)
+	 * @var array
+	 * @access protected
+	 */
 	protected $_actions;
+	/**
+	 * Contains action hooks
+	 * @var array
+	 * @access protected
+	 */
 	protected $_filters;
 	
+	
+	/**
+	 * Contains path to bootstrap scripts added to the current instance
+	 * @var array
+	 * @access protected
+	 */
 	protected $_bootstraps = array();
 	
+	
+	/**
+	 * Contains all plugins added to the current instance
+	 * @var array
+	 * @access protected
+	 */
 	protected $_plugins = array();
+	/**
+	 * Contains all plugins that need to be initialized in bootstrap method
+	 * @var array
+	 * @access protected
+	 */
 	protected $_pluginsBootstrap = array();
+	/**
+	 * Contains all plugins that are initialized when used
+	 * @var array
+	 * @access protected
+	 */
 	protected $_pluginsStandby = array();
 	
+	
+	/**
+	 * Contains the path to the current layout file
+	 * @var string
+	 * @access protected
+	 */
 	protected $_layout;
+	/**
+	 * Contains the path to the current page file
+	 * @var string
+	 * @access protected
+	 */
 	protected $_page;
+	/**
+	 * Contains all data that will be parsed into views when rendering the page
+	 * @var array
+	 * @access protected
+	 */
 	protected $_data = array();
-	protected $_head;
+	/**
+	 * Contains all javascript files that will be included in current page
+	 * @var array
+	 * @access protected
+	 */
 	protected $_scripts = array();
+	/**
+	 * Contains all css files that will be included in current page
+	 * @var array
+	 * @access protected
+	 */
 	protected $_stylesheets = array();
 	
+	
+	/**
+     * Constructor function
+     *
+     * Load the configuration and initialize static Gregory
+     *
+     * @param string|null $config The config array for the current instance (will extend $_defaultConfig)
+     */
 	public function __construct($config = array()) {
 		
 		try {
@@ -119,6 +286,12 @@ class Gregory {
 	}
 	
 	
+	/**
+	 * This is a static method to initialize Gregory class.
+	 * 
+	 * It should be used to initialize things that need to be globally available
+	 * to all Gregory instances
+	 */
 	public static function init() {
 		
 		try {
@@ -137,8 +310,11 @@ class Gregory {
 		}
 	}
 	
-	
-	public function bootstrap($modules = array()) {
+	/**
+     * Initialize the current instance of Gregory. It will bootstrap plugins and user defined
+     * bootstrap scripts.
+     */
+	public function bootstrap() {
 		
 		try {
 			
@@ -157,6 +333,25 @@ class Gregory {
 		}
 	}
 	
+	/**
+     * Route the current request and run the associated controller
+     *
+     * This method will find wich route match the current url. Then it will run the page associated
+     * to this route
+     * 
+     * Minimal example
+	 * <code>
+	 * $app->run();
+	 * //Will use $_SERVER['REQUEST_URI'] for routing
+	 * </code>
+	 * 
+     * Example usage when specifying the current url
+	 * <code>
+	 * $app->run('/about.html');
+	 * </code>
+     *
+     * @param string $url The url of the current request. If not specified, will use $_SERVER['REQUEST_URI']
+     */
 	public function run($url = null) {
 		
 		try {
@@ -205,6 +400,26 @@ class Gregory {
 		
 	}
 	
+	/**
+     * Render the current page
+     *
+     * This method will take the layout(if you specified one) and insert the contents in it. It will
+     * also replace any template variables in your views.
+     * 
+     * Minimal example
+	 * <code>
+	 * $app->render();
+	 * </code>
+	 * 
+     * Example usage when first parameter is set to true
+	 * <code>
+	 * $return = $app->render(true);
+	 * echo $return;
+	 * </code>
+     *
+     * @param boolean $return If set to true, the function will return the rendered content instead of echoing.
+     * @return mixed If the parameter $return is set to true, it returns the rendered content
+     */
 	public function render($return = false) {
 		
 		try {
@@ -236,9 +451,24 @@ class Gregory {
 	}
 	
 	/**
-	 *
 	 * Update Gregory config
 	 *
+	 * When only one parameter is specified and it is an array, it will be used to set the config
+	 * array for the current instance. If to parameters are specified and the first is a string
+	 * it will be used to specify a single config property.
+	 *
+	 * Here is an example for setting the whole config array
+	 * <code>
+	 * $app->setConfig(array('layout'=>'/layout.html'));
+	 * </code>
+	 *
+	 * Here is an exmaple for setting a single property
+	 * <code>
+	 * $app->setConfig('layout','/layout.html');
+	 * </code>
+	 *
+	 * @param string|array $config If this is the only parameters and it is an array, it will be used to override the config of the current instance
+	 * @param mixed $value The value for the config property specified in $config param
 	 */
 	public function setConfig($config, $value = null) {
 		if(!isset($value) && is_array($config)) $this->_config = $config;
@@ -247,9 +477,33 @@ class Gregory {
 	}
 	
 	/**
-	 *
 	 * Get Gregory config
 	 *
+	 * When no parameter is specified, this method will return the whole config array. If parameter
+	 * one is a string it will return the value of the specified property.
+	 *
+	 * Here is an example for getting the whole config array
+	 * <code>
+	 * $config = $app->getConfig();
+	 * //$config contains the whole $config array
+	 * </code>
+	 *
+	 * Here is an exmaple for getting a single property
+	 * <code>
+	 * $config = $app->getConfig('layout');
+	 * //$config contains '/layout.html'
+	 *
+	 * $config = $app->getConfig('route.path');
+	 * //$config contains '/'
+	 *
+	 * //This is equivalent to $app->getConfig('route.path');
+	 * $config = $app->getConfig();
+	 * $config = $config['route']['path'];
+	 * //$config contains '/'
+	 * </code>
+	 *
+	 * @param string $key The key for a single property in config array. You can use the «.» to navigate trough array level (see examples)
+	 * @return mixed The config array or the value of the specified property. If the specified property is not found, return null
 	 */
 	public function getConfig($key = null) {
 		if(!isset($key)) return $this->_config;
@@ -1121,7 +1375,14 @@ class Gregory {
 }
 
 
-
+/**
+ *
+ * Define the path to your version of Zend that will be used for autoloading.
+ *
+ * @name PATH_ZEND
+ *
+ */
 define('PATH_ZEND',PATH_GREGORY);
+
 set_include_path(get_include_path().PATH_SEPARATOR.PATH_ZEND);
 spl_autoload_register(array('Gregory','_autoload'));
