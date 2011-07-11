@@ -1147,9 +1147,9 @@ class Gregory {
 	protected function _refreshUsageStats() {
 		//$this->_setStats('maxMemory',round(memory_get_peak_usage(true)/(1024*1024),2).' mb');
 		//$this->_setStats('maxMemory',memory_get_peak_usage(true).' mb');
-		$stats = $this->getStats();
 		$this->_setStats('maxMemory',round(memory_get_peak_usage()/1024,2).' kb');
 		$this->_setStats('endTime',(float) array_sum(explode(' ',microtime())));
+		$stats = $this->getStats();
 		$this->_setStats('executionTime',round(($stats['endTime'] - $stats['startTime'])*1000,2).' msec.');
 	}
 	
@@ -1292,11 +1292,6 @@ class Gregory {
 		
 		if(isset(self::$_paths[$file])) return self::$_paths[$file];
 		
-		if(file_exists($file)) {
-			self::$_paths[$file] = $file;
-			return $file;
-		}
-		
 		$currentPath = dirname(__FILE__);
     	if(!in_array($currentPath, $paths)) $paths[] = $currentPath;
 		foreach($paths as $path) {
@@ -1307,6 +1302,12 @@ class Gregory {
 				return $path;
 			}
 		}
+		
+		if(file_exists($file)) {
+			self::$_paths[$file] = $file;
+			return $file;
+		}
+		
 		return false;
     }
 	
