@@ -432,7 +432,7 @@ class Gregory {
 			
 			
 			if($layout = $this->getLayout()) {
-				$content = self::template($layout,array('content'=>$content),false);
+				$content = self::template($layout,array_merge($this->getData(),array('content'=>$content)),false);
 				$content = self::template($content,$data);
 			}
 			
@@ -1266,7 +1266,7 @@ class Gregory {
 	
 	public static function template($layout, $data = array(),$clean = true) {
 		if(strlen($layout) < 1024 && file_exists($layout)) {
-			$layout = Gregory::get()->renderFile($layout);
+			$layout = Gregory::get()->renderFile($layout,$data);
 		}
 		$html = $layout;
 		if(isset($data) && is_array($data)) {
