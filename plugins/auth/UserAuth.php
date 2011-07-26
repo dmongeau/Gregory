@@ -39,6 +39,14 @@ class UserAuth {
 		$authAdapter->setIdentity($email);
 		$authAdapter->setCredential($password);
 		
+		
+		if(isset($config['valid'])) {
+			$select = $authAdapter->getDbSelect();
+			foreach($config['valid'] as $key => $value) {
+				$select->where($key.' = ?',$value);
+			}
+		}
+		
 		Gregory::get()->doAction('auth.login',array($email,$password));
 		
 		$result = $this->auth->authenticate($authAdapter);
@@ -105,6 +113,7 @@ class UserAuth {
 	
 	public function setIdentity($identity) {
 		$this->identity = $identity;
+		$this->auth->getStorage()->write($identity);
 	}
 	public function getIdentity() {
 		return $this->identity;
