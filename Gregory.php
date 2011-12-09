@@ -707,24 +707,39 @@ class Gregory {
 					if(!isset($u)) {
 						$match = false;
 					} else if(substr($part,0,1) == $paramPrefix && strlen($part) > 1) {
-						if(strpos($part,'.') !== false) {
+						if(preg_match('/^\\'.$paramPrefix.'([^\{]+)\{([^\}]+)\}$/',$part,$matches)) {
+							if(preg_match('/'.$matches[2].'/',$u)) $params[$matches[1]] = $u;
+							else $match = false;
+						} elseif(strpos($part,'.') !== false) {
 							$pos = strpos($u,'.');
 							if($pos === false) $match = false;
 							else {
 								$uext = strtolower(substr($u,$pos));
 								$u = substr($u,0,$pos);
 								
-								$pos = strpos($part,'.');
+								$pos = strrpos($part,'.');
 								$ext = strtolower(substr($part,$pos));
 								$name = substr($part,1,$pos-1);
 								
 								if($ext != $uext) $match = false;
-								else $params[$name] = $u;
+								else {
+									if(preg_match('/^([^\{]+)\{([^\}]+)\}$/',$name,$matches)) {
+										if(preg_match('/'.$matches[2].'/',$u)) $params[$matches[1]] = $u;
+										else $match = false;
+									} else {
+										$params[$name] = $u;
+									}
+								}
 							}
 							
 						} else {
-							$name = substr($part,1);
-							$params[$name] = $u;
+							if(preg_match('/^\\'.$paramPrefix.'([^\{]+)\{([^\}]+)\}$/',$part,$matches)) {
+								if(preg_match('/'.$matches[2].'/',$u)) $params[$matches[1]] = $u;
+								else $match = false;
+							} else {
+								$name = substr($part,1);
+								$params[$name] = $u;
+							}	
 						}
 					} else if($part == $routeWildcard) {
 						$wildcard = array_slice($urlParts,$i);
@@ -977,9 +992,12 @@ class Gregory {
      * Messages system
      *
      */
-	public function addMessage($message, $category = 'default') {
+	public function addMessage($message, $category = 'default', $data = array()) {
 		
-		$this->_messages[$category][] = $message;
+		$this->_messages[$category][] = array_merge(array(
+			'category' => $category,
+			'message' => $message
+		),$data);
 		$this->session('messages',$this->_messages);
 		
 	}
@@ -1004,7 +1022,7 @@ class Gregory {
 			$messages[] = $message;
 		}
 		
-		if($clean) $this->cleanMessages();
+		if($clean) $this->cleanMessages($category);
 		
 		return $messages;
 		
@@ -1020,9 +1038,16 @@ class Gregory {
 		
 	}
 	
-	public function cleanMessages() {
-		$this->_messages = array();
-		$this->session('messages',null);	
+	public function cleanMessages($category = null) {
+		if(!empty($category)) {
+			if(isset($this->_messages[$category])) {
+				$this->_messages[$category] = array();
+				$this->session('messages',$this->_messages);
+			}
+		} else {
+			$this->_messages = array();
+			$this->session('messages',$this->_messages);
+		}	
 	}
 	
 	public function getMessagesAsHTML($category =  null, $clean = true,$opts = array()) {
@@ -1037,10 +1062,10 @@ class Gregory {
 		
 		if(sizeof($items) > 1 || (sizeof($items) == 1 && $opts['alwaysList'])) {
 			$html = array();
-			foreach($items as $item) $html[] = '<li>'.$item.'</li>';
-			return '<ul>'.implode("\n",$html).'</ul>';
+			foreach($items as $item) $html[] = '<li>'.$item['message'].'</li>';
+			return '<ul class="'.$item['category'].'">'.implode("\n",$html).'</ul>';
 		} else {
-			return $items[0];
+			return $items[0]['message'];
 		}
 		
 	}
@@ -1064,26 +1089,20 @@ class Gregory {
 	
 	public function addError($error, $type = null, $exception = null) {
 		
-		$error = array(
-			'message' => $error
-		);
-		if($type) $error['type'] = $type;
-		if($exception) $error['exception'] = $exception;
+		$data = array();
+		if($type) $data['type'] = $type;
+		if($exception) $data['exception'] = $exception;
 		
-		if(!isset($this->_errors)) $this->_errors = array();
-		
-		$this->_errors[] = $error;
-		$this->session('errors',$this->_errors);
+		$this->addMessage($error,'error',$data);
 		
 	}
 	
 	public function getErrors($cleanAfter = true) {
 		
-		$errors = $this->_errors;
+		$errors = $this->getMessagesByCategory('error');
 		
 		if($cleanAfter) {
-			$this->_errors = array();
-			$this->session('errors',null);
+			$this->cleanMessages('error');
 		}
 		
 		return $errors;
@@ -1092,27 +1111,13 @@ class Gregory {
 	
 	public function displayErrors($cleanAfter = true,$opts = array()) {
 		
-		if(!$this->hasErrors()) return;
-		
-		$errors = $this->getErrors($cleanAfter);
-		$opts = array_merge(array(
-			'alwaysList' => false
-		),$opts);
-		
-		if(sizeof($errors) > 1 || (sizeof($errors) == 1 && $opts['alwaysList'])) {
-			$html = array();
-			foreach($errors as $error) $html[] = '<li>'.$error['message'].'</li>';
-			return '<ul>'.implode("\n",$html).'</ul>';
-		} else {
-			return $errors[0]['message'];
-		}
+		return $this->getMessagesAsHTML('error',$cleanAfter,$opts);
 		
 	}
 	
 	public function hasErrors() {
 		
-		if(isset($this->_errors) && sizeof($this->_errors)) return true;
-		else return false;
+		return $this->hasMessages('error');
 		
 	}
 	
@@ -1132,6 +1137,26 @@ class Gregory {
 		
 	}
 	
+	/*
+     *
+     * Redirect with message
+     *
+     */
+	public function redirectWithErrorMessage($url,$message) {
+		
+		$this->addMessage($message,'error');
+		
+		Gregory::redirect($url);
+	
+	}
+	
+	public function redirectWithSuccessMessage($url,$message) {
+		
+		$this->addMessage($message,'success');
+		
+		Gregory::redirect($url);
+	
+	}
 
 	/*
 	 *
