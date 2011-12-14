@@ -272,6 +272,10 @@ class Gregory {
 			$this->_errors = $this->session('errors');
 			$this->_messages = $this->session('messages');
 			
+			//Clean errors from session
+			$this->session('errors',null);
+			$this->session('messages',null);
+			
 			//Initialize static Gregory
 			self::init();
 			
@@ -1052,7 +1056,7 @@ class Gregory {
 	
 	public function getMessagesAsHTML($category =  null, $clean = true,$opts = array()) {
 		
-		if(!$this->hasMessages()) return;
+		if(!$this->hasMessages($category)) return;
 		
 		$opts = array_merge(array(
 			'alwaysList' => false
