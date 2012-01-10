@@ -1066,10 +1066,11 @@ class Gregory {
 		
 		if(sizeof($items) > 1 || (sizeof($items) == 1 && $opts['alwaysList'])) {
 			$html = array();
-			foreach($items as $item) $html[] = '<li>'.isset($item['message']) ? $item['message']:$item.'</li>';
+			foreach($items as $item) $html[] = '<li>'.(isset($category) ? $item:$item['message']).'</li>';
 			return '<ul class="'.($item['category'] ? $item['category']:$category).'">'.implode("\n",$html).'</ul>';
 		} else {
-			return (isset($items[0]['message'])) ? $items[0]['message']:$items[0];
+			
+			return isset($category) ? $items[0]:$items[0]['message'];
 		}
 		
 	}
