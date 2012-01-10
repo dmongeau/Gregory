@@ -1023,7 +1023,7 @@ class Gregory {
 		
 		$messages = array();
 		foreach($this->_messages[$category] as $message) {
-			$messages[] = $message;
+			$messages[] = $message['message'];
 		}
 		
 		if($clean) $this->cleanMessages($category);
@@ -1066,10 +1066,10 @@ class Gregory {
 		
 		if(sizeof($items) > 1 || (sizeof($items) == 1 && $opts['alwaysList'])) {
 			$html = array();
-			foreach($items as $item) $html[] = '<li>'.$item['message'].'</li>';
-			return '<ul class="'.$item['category'].'">'.implode("\n",$html).'</ul>';
+			foreach($items as $item) $html[] = '<li>'.isset($item['message']) ? $item['message']:$item.'</li>';
+			return '<ul class="'.($item['category'] ? $item['category']:$category).'">'.implode("\n",$html).'</ul>';
 		} else {
-			return $items[0]['message'];
+			return (isset($items[0]['message'])) ? $items[0]['message']:$items[0];
 		}
 		
 	}
