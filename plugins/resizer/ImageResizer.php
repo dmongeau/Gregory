@@ -248,7 +248,101 @@ class ImageResizer {
 		if(isset($opts['rotation']) && !empty($opts['rotation'])) {
 			$dst = imagerotate($dst, (float)$opts['rotation'], 0) ;
 		}
+
+		try{
+
+		/*
+
+		Filters :
+
+			IMG_FILTER_GRAYSCALE: Converts the image into grayscale.
+			IMG_FILTER_BRIGHTNESS: Changes the brightness of the image. Use arg1 to set the level of brightness.
+			IMG_FILTER_CONTRAST: Changes the contrast of the image. Use arg1 to set the level of contrast.
+			IMG_FILTER_COLORIZE: Like IMG_FILTER_GRAYSCALE, except you can specify the color. Use arg1, arg2 and arg3 in the form of red, blue, green and arg4 for the alpha channel. The range for each color is 0 to 255.
+			IMG_FILTER_EDGEDETECT: Uses edge detection to highlight the edges in the image.
+			IMG_FILTER_EMBOSS: Embosses the image.
+			IMG_FILTER_GAUSSIAN_BLUR: Blurs the image using the Gaussian method.
+			IMG_FILTER_SELECTIVE_BLUR: Blurs the image.
+			IMG_FILTER_MEAN_REMOVAL: Uses mean removal to achieve a "sketchy" effect.
+			IMG_FILTER_SMOOTH: Makes the image smoother. Use arg1 to set the level of smoothness.
+			IMG_FILTER_PIXELATE: Applies pixelation effect to the image, use arg1 to set the block size and arg2 to set the pixelation effect mode.
 		
+		*/
+
+		
+			if(isset($opts['IMG_FILTER_NEGATE']) && !empty($opts['IMG_FILTER_NEGATE'])){
+
+				imagefilter($dst, IMG_FILTER_NEGATE);
+			}
+			if(isset($opts['IMG_FILTER_GRAYSCALE']) && !empty($opts['IMG_FILTER_GRAYSCALE'])){
+
+				imagefilter($dst, IMG_FILTER_GRAYSCALE);
+			}
+			if(isset($opts['IMG_FILTER_BRIGHTNESS']) && !empty($opts['IMG_FILTER_BRIGHTNESS'])){
+
+				imagefilter($dst, IMG_FILTER_BRIGHTNESS, intval($opts['IMG_FILTER_BRIGHTNESS']));
+			}
+			if(isset($opts['IMG_FILTER_CONTRAST']) && !empty($opts['IMG_FILTER_CONTRAST'])){
+				
+				imagefilter($dst, IMG_FILTER_CONTRAST, intval($opts['IMG_FILTER_CONTRAST']));
+			}
+			if(isset($opts['IMG_FILTER_COLORIZE']) && !empty($opts['IMG_FILTER_COLORIZE'])){
+
+				if(strlen($opts['IMG_FILTER_COLORIZE']) == 12){
+
+					$arg1 = intval(substr($opts['IMG_FILTER_COLORIZE'], 0, 3));
+					$arg2 = intval(substr($opts['IMG_FILTER_COLORIZE'], 3, 3));
+					$arg3 = intval(substr($opts['IMG_FILTER_COLORIZE'], 6, 3));
+					$arg4 = intval(substr($opts['IMG_FILTER_COLORIZE'], 9, 3));
+
+					imagefilter($dst, IMG_FILTER_COLORIZE, $arg1, $arg2, $arg3, $arg4);
+				}
+
+				
+			}
+			if(isset($opts['IMG_FILTER_EDGEDETECT']) && !empty($opts['IMG_FILTER_EDGEDETECT'])){
+
+				imagefilter($dst, IMG_FILTER_EDGEDETECT);
+			}
+			if(isset($opts['IMG_FILTER_EMBOSS']) && !empty($opts['IMG_FILTER_EMBOSS'])){
+				
+				imagefilter($dst, IMG_FILTER_EMBOSS);
+			}
+			if(isset($opts['IMG_FILTER_GAUSSIAN_BLUR']) && !empty($opts['IMG_FILTER_GAUSSIAN_BLUR'])){
+				
+				imagefilter($dst, IMG_FILTER_GAUSSIAN_BLUR);
+			} //: Reverses all colors of the image.
+			if(isset($opts['IMG_FILTER_SELECTIVE_BLUR']) && !empty($opts['IMG_FILTER_SELECTIVE_BLUR'])){
+				
+				imagefilter($dst, IMG_FILTER_SELECTIVE_BLUR);
+			} //: Reverses all colors of the image.
+			if(isset($opts['IMG_FILTER_MEAN_REMOVAL']) && !empty($opts['IMG_FILTER_MEAN_REMOVAL'])){
+				
+				imagefilter($dst, IMG_FILTER_MEAN_REMOVAL);
+			} //: Reverses all colors of the image.
+			if(isset($opts['IMG_FILTER_SMOOTH']) && !empty($opts['IMG_FILTER_SMOOTH'])){
+				
+				imagefilter($dst, IMG_FILTER_SMOOTH, intval($opts['IMG_FILTER_SMOOTH']));
+			} //: Reverses all colors of the image.
+			if(isset($opts['IMG_FILTER_PIXELATE']) && !empty($opts['IMG_FILTER_PIXELATE'])){
+
+				if(strlen($opts['IMG_FILTER_PIXELATE']) > 3){
+					$arg1 = intval(substr($opts['IMG_FILTER_PIXELATE'], 0, 3));
+					$arg2 = ($opts['IMG_FILTER_PIXELATE'] == true);
+				}
+				else{
+					$arg1 = intval($opts['IMG_FILTER_PIXELATE']);
+					$arg2 = false;
+				}
+				
+				imagefilter($dst, IMG_FILTER_PIXELATE, $arg1, $arg2);
+			} //: Reverses all colors of the image.
+
+		}
+		catch(Exception $e){
+			var_dump($e);
+		}
+
 		
 		ob_start();
 		$outputFunction($dst, null, $quality);
