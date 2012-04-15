@@ -19,6 +19,8 @@ ini_set('gd.jpeg_ignore_warning', 0);
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
+require_once("MagickFilter.php");
+
 class ImageResizer {
 	
 	protected static $_config;
@@ -44,9 +46,12 @@ class ImageResizer {
 		
 	}
 	
-	public function resize($maxwidth,$maxheight = 0,$opts = array()) {
+	public function resize($maxwidth = 0,$maxheight = 0,$opts = array()) {
 		
 		$config = self::getConfig();
+
+		//var_dump($opts);
+		//exit();
 		
 		if($config['cache'] && $cache = $this->getCache()) {
 			$this->_data = $cache;
@@ -268,7 +273,6 @@ class ImageResizer {
 			IMG_FILTER_PIXELATE: Applies pixelation effect to the image, use arg1 to set the block size and arg2 to set the pixelation effect mode.
 		
 		*/
-
 		
 			if(isset($opts['IMG_FILTER_NEGATE']) && !empty($opts['IMG_FILTER_NEGATE'])){
 
@@ -338,6 +342,36 @@ class ImageResizer {
 				imagefilter($dst, IMG_FILTER_PIXELATE, $arg1, $arg2);
 			} //: Reverses all colors of the image.
 
+			if(isset($opts['overlay']) && !empty($opts['overlay'])){
+				
+				  $background = imagecreatefrompng("/Users/Nicolas/Repos/v2.camps-odyssee.com/bk.png");
+
+
+				  // Defining the overlay image to be added or combined.
+
+				  $insert = imagecreatefrompng("/Users/Nicolas/Repos/v2.camps-odyssee.com/over.png");
+
+
+				  // Select the first pixel of the overlay image (at 0,0) and use
+				  // it's color to define the transparent color
+
+				  imagecolortransparent($insert,imagecolorat($insert,0,0));
+
+
+				  // Get overlay image width and hight for later use
+
+				  $insert_x = imagesx($insert);
+				  $insert_y = imagesy($insert);
+
+
+				  // Combine the images into a single output image. Some people
+				  // prefer to use the imagecopy() function, but more often than 
+				  // not, it sometimes does not work. (could be a bug)
+
+				  imagecopymerge($dst,$insert,0,0,0,0,$insert_x,$insert_y,100);
+
+			}
+
 		}
 		catch(Exception $e){
 			var_dump($e);
@@ -351,14 +385,55 @@ class ImageResizer {
 		
 		imagedestroy($src);
 		imagedestroy($dst);
+
+		if(isset($opts['mino'])){
+
+			$Magick = new Magick_Filter($this->_data);
+			$Magick->filterMino();
+			$this->_data = $Magick->save();
+
+		}
+		else if(isset($opts['bourg'])){
+			$Magick = new Magick_Filter($this->_data);
+			$Magick->filterBourg();
+			$this->_data = $Magick->save();
+
+		}
+		else if(isset($opts['trois'])){
+			$Magick = new Magick_Filter($this->_data);
+			$Magick->filter3S();
+			$this->_data = $Magick->save();
+		}
+
+		if(isset($opts['cropx']) && !empty($opts['cropx'])){
+
+			if(!isset($opts['cropy']) || empty($opts['cropy'])){
+				$opts['cropy'] = 0;
+			}
+
+			$Magick = new Magick_Filter($this->_data);
+			$Magick->crop($opts['cropx'], $opts['cropy']);
+			$this->_data = $Magick->save();
+		}
+		else if(isset($opts['cropy']) && !empty($opts['cropy'])){
+
+			if(!isset($opts['cropx']) || empty($opts['cropx'])){
+				$opts['cropx'] = 0;
+			}
+
+			$Magick = new Magick_Filter($this->_data);
+			$Magick->crop($opts['cropx'], $opts['cropy']);
+			$this->_data = $Magick->save();
+		}
+
 		
-		if($config['cache']) $this->saveCache();
+		if($config['cache']) $this->saveCache($opts);
 		
 		return $this->_data;
 		
 	}
 	
-	public function saveCache() {
+	public function saveCache($opts) {
 		
 		$config = self::getConfig();
 		
@@ -370,6 +445,7 @@ class ImageResizer {
 		
 		if(!file_exists($directory)) mkdir($directory,0777,true);
 		if(!file_exists($path)) file_put_contents($path,$this->_data);
+
 	}
 	
 	public function getCache() {

@@ -77,7 +77,13 @@ function resizer_route($route) {
 		'xsb' => 'IMG_FILTER_SELECTIVE_BLUR',//: Blurs the image.
 		'xmr' => 'IMG_FILTER_MEAN_REMOVAL',//: Uses mean removal to achieve a "sketchy" effect.
 		'xsm' => 'IMG_FILTER_SMOOTH',//: Makes the image smoother. Use arg1 to set the level of smoothness.
-		'xpx' => 'IMG_FILTER_PIXELATE' //pixelate
+		'xpx' => 'IMG_FILTER_PIXELATE', //pixelate
+
+		'cx' => 'cropx',
+		'cy' => 'cropy',
+		'mino' => 'mino',
+		'trois' => 'trois',
+		'bourg' => 'bourg'
 
 	);
 	
@@ -88,6 +94,9 @@ function resizer_route($route) {
 		
 		if(is_array($file)) $file[] = $part;
 		else if($part == 'bw') $options['blackwhite'] = true;
+		else if($part == 'mino') $options['mino'] = true;
+		else if($part == 'trois') $options['trois'] = true;
+		else if($part == 'bourg') $options['bourg'] = true;
 		else if($part == 'ratio') $options['ratio'] = true;
 		else if($part == 'crop') $options['crop'] = true;
 		else if(preg_match('/^([a-z]+)([0-9\.]+)$/',$part,$matches)) {
