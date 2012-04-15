@@ -3,7 +3,7 @@
  *
  * ImageResizer
  *
- * Class to resize image using gd library
+ * Class to resize image using gd library + addons with imagick library
  *
  * @author David Mongeau-Petitpas <dmp@commun.ca>
  * @version 0.9
@@ -386,46 +386,54 @@ class ImageResizer {
 		imagedestroy($src);
 		imagedestroy($dst);
 
-		if(isset($opts['mino'])){
+		//The following depends on Imagick
 
-			$Magick = new Magick_Filter($this->_data);
-			$Magick->filterMino();
-			$this->_data = $Magick->save();
+		if(class_exists('Imagick')){
 
-		}
-		else if(isset($opts['bourg'])){
-			$Magick = new Magick_Filter($this->_data);
-			$Magick->filterBourg();
-			$this->_data = $Magick->save();
+			//Custom-filter minogami
+			if(isset($opts['mino'])){
 
-		}
-		else if(isset($opts['trois'])){
-			$Magick = new Magick_Filter($this->_data);
-			$Magick->filter3S();
-			$this->_data = $Magick->save();
-		}
+				$Magick = new Magick_Filter($this->_data);
+				$Magick->filterMino();
+				$this->_data = $Magick->getBlob();
 
-		if(isset($opts['cropx']) && !empty($opts['cropx'])){
+			}
+			//Custom-filter Bourg-Royal
+			else if(isset($opts['bourg'])){
+				$Magick = new Magick_Filter($this->_data);
+				$Magick->filterBourg();
+				$this->_data = $Magick->getBlob();
 
-			if(!isset($opts['cropy']) || empty($opts['cropy'])){
-				$opts['cropy'] = 0;
+			}
+			//Custom-filter Trois-Saumons
+			else if(isset($opts['trois'])){
+				$Magick = new Magick_Filter($this->_data);
+				$Magick->filter3S();
+				$this->_data = $Magick->getBlob();
+			}
+			//Custom-crop
+			if(isset($opts['cropx']) && !empty($opts['cropx'])){
+
+				if(!isset($opts['cropy']) || empty($opts['cropy'])){
+					$opts['cropy'] = 0;
+				}
+
+				$Magick = new Magick_Filter($this->_data);
+				$Magick->crop($opts['cropx'], $opts['cropy']);
+				$this->_data = $Magick->getBlob();
+			}
+			else if(isset($opts['cropy']) && !empty($opts['cropy'])){
+
+				if(!isset($opts['cropx']) || empty($opts['cropx'])){
+					$opts['cropx'] = 0;
+				}
+
+				$Magick = new Magick_Filter($this->_data);
+				$Magick->crop($opts['cropx'], $opts['cropy']);
+				$this->_data = $Magick->getBlob();
 			}
 
-			$Magick = new Magick_Filter($this->_data);
-			$Magick->crop($opts['cropx'], $opts['cropy']);
-			$this->_data = $Magick->save();
 		}
-		else if(isset($opts['cropy']) && !empty($opts['cropy'])){
-
-			if(!isset($opts['cropx']) || empty($opts['cropx'])){
-				$opts['cropx'] = 0;
-			}
-
-			$Magick = new Magick_Filter($this->_data);
-			$Magick->crop($opts['cropx'], $opts['cropy']);
-			$this->_data = $Magick->save();
-		}
-
 		
 		if($config['cache']) $this->saveCache($opts);
 		
