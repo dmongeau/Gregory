@@ -19,8 +19,6 @@ ini_set('gd.jpeg_ignore_warning', 0);
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require_once("MagickFilter.php");
-
 class ImageResizer {
 	
 	protected static $_config;
@@ -29,6 +27,7 @@ class ImageResizer {
 	protected $_imagesize;
 	protected $_mime;
 	protected $_data;
+	protected $_image;
 	
 	public function __construct($file) {
 		
@@ -50,9 +49,6 @@ class ImageResizer {
 		
 		$config = self::getConfig();
 
-		//var_dump($opts);
-		//exit();
-		
 		if($config['cache'] && $cache = $this->getCache()) {
 			$this->_data = $cache;
 			return $this->_data;
@@ -342,41 +338,10 @@ class ImageResizer {
 				imagefilter($dst, IMG_FILTER_PIXELATE, $arg1, $arg2);
 			} //: Reverses all colors of the image.
 
-			if(isset($opts['overlay']) && !empty($opts['overlay'])){
-				
-				  $background = imagecreatefrompng("/Users/Nicolas/Repos/v2.camps-odyssee.com/bk.png");
-
-
-				  // Defining the overlay image to be added or combined.
-
-				  $insert = imagecreatefrompng("/Users/Nicolas/Repos/v2.camps-odyssee.com/over.png");
-
-
-				  // Select the first pixel of the overlay image (at 0,0) and use
-				  // it's color to define the transparent color
-
-				  imagecolortransparent($insert,imagecolorat($insert,0,0));
-
-
-				  // Get overlay image width and hight for later use
-
-				  $insert_x = imagesx($insert);
-				  $insert_y = imagesy($insert);
-
-
-				  // Combine the images into a single output image. Some people
-				  // prefer to use the imagecopy() function, but more often than 
-				  // not, it sometimes does not work. (could be a bug)
-
-				  imagecopymerge($dst,$insert,0,0,0,0,$insert_x,$insert_y,100);
-
-			}
-
 		}
 		catch(Exception $e){
 			var_dump($e);
 		}
-
 		
 		ob_start();
 		$outputFunction($dst, null, $quality);
@@ -387,40 +352,67 @@ class ImageResizer {
 		imagedestroy($dst);
 
 		//The following depends on Imagick
+		//$this->_image is the Imagick Object; add calls to the different native functions as needed, it is returned as $this->_data at the end.
 
 		if(class_exists('Imagick')){
 
-			//Custom-filter minogami
-			if(isset($opts['mino'])){
+			$this->_image = new Imagick();
+	        $this->_image->readImageBlob($this->_data);
 
-				$Magick = new Magick_Filter($this->_data);
-				$Magick->filterMino();
-				$this->_data = $Magick->getBlob();
+			if(isset($opts['brightness']) && !empty($opts['brightness'])){
+	        	
+				$this->_image->modulateImage($opts['brightness'], 100, 100);
+			}
 
+			if(isset($opts['saturation']) && !empty($opts['saturation'])){
+	        	
+	        	$this->_image->modulateImage(100, $opts['saturation'], 100);
 			}
-			//Custom-filter Bourg-Royal
-			else if(isset($opts['bourg'])){
-				$Magick = new Magick_Filter($this->_data);
-				$Magick->filterBourg();
-				$this->_data = $Magick->getBlob();
 
+			if(isset($opts['hue']) && !empty($opts['hue'])){
+
+	        	$this->_image->modulateImage(100, 100, $opts['hue']);
 			}
-			//Custom-filter Trois-Saumons
-			else if(isset($opts['trois'])){
-				$Magick = new Magick_Filter($this->_data);
-				$Magick->filter3S();
-				$this->_data = $Magick->getBlob();
+
+			if(isset($opts['contrast']) && !empty($opts['contrast'])){
+	        	
+	        	$this->_image->contrastImage($opts['contrast']);
 			}
-			//Custom-crop
+
+			if(isset($opts['composite']) && !empty($opts['composite'])){
+	        	
+	        	$over = new Imagick($opts['composite']);
+
+				$d = $this->_image->getImageGeometry();
+				$w = $d['width'];
+				$h = $d['height'];
+
+				$over->thumbnailImage($w, $h);
+
+				$this->_image->compositeImage($over, imagick::COMPOSITE_DEFAULT, 0, 0);
+			}
 			if(isset($opts['cropx']) && !empty($opts['cropx'])){
 
 				if(!isset($opts['cropy']) || empty($opts['cropy'])){
 					$opts['cropy'] = 0;
 				}
 
-				$Magick = new Magick_Filter($this->_data);
-				$Magick->crop($opts['cropx'], $opts['cropy']);
-				$this->_data = $Magick->getBlob();
+				if(isset($opts['lencropx']) && !empty($opts['lencropx'])){
+					$maxwidth = $opts['lencropx'];
+				}
+				else{
+					$maxwidth = $config['maxLengthCropX'];
+				}
+
+				if(isset($opts['lencropy']) && !empty($opts['lencropy'])){
+					$maxheight = $opts['lencropy'];
+				}
+				else{
+					$maxheight = $config['maxLengthCropY'];
+				}
+
+				$this->_image->cropImage($maxwidth,$maxheight,$opts['cropx'],$opts['cropy']);
+				
 			}
 			else if(isset($opts['cropy']) && !empty($opts['cropy'])){
 
@@ -428,10 +420,24 @@ class ImageResizer {
 					$opts['cropx'] = 0;
 				}
 
-				$Magick = new Magick_Filter($this->_data);
-				$Magick->crop($opts['cropx'], $opts['cropy']);
-				$this->_data = $Magick->getBlob();
+				if(isset($opts['lencropx']) && !empty($opts['lencropx'])){
+					$maxwidth = $opts['lencropx'];
+				}
+				else{
+					$maxwidth = 410;
+				}
+
+				if(isset($opts['lencropy']) && !empty($opts['lencropy'])){
+					$maxheight = $opts['lencropy'];
+				}
+				else{
+					$maxheight = 275;
+				}
+
+				$this->_image->cropImage($maxwidth,$maxheight,$opts['cropx'],$opts['cropy']);
 			}
+
+			$this->_data = $this->_image->getImageBlob();
 
 		}
 		
