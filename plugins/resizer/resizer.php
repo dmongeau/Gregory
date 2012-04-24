@@ -70,7 +70,7 @@ function resizer_route($route) {
 		//All current GD filters
 
 		'xgr' => 'IMG_FILTER_GRAYSCALE',//: Converts the image into grayscale.
-		'xbr' => 'IMG_FILTER_BRIGHTNESS',//: Changes the brightness of the image. Use arg1 to set the level of brightness.
+		'xbr' => 'brightness',//: Changes the brightness of the image. Use arg1 to set the level of brightness.
 		'xcn' => 'IMG_FILTER_CONTRAST',//: Changes the contrast of the image. Use arg1 to set the level of contrast.
 		'xco' => 'IMG_FILTER_COLORIZE',//: Like IMG_FILTER_GRAYSCALE, except you can specify the color. Use arg1, arg2 and arg3 in the form of red, blue, green and arg4 for the alpha channel. The range for each color is 0 to 255.
 		'xed' => 'IMG_FILTER_EDGEDETECT',//: Uses edge detection to highlight the edges in the image.

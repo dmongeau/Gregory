@@ -15,9 +15,9 @@ ini_set('display_errors', 0);
 error_reporting(0);
 
 
-ini_set('gd.jpeg_ignore_warning', 0);
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+//ini_set('gd.jpeg_ignore_warning', 0);
+//ini_set('display_errors', 1);
+//error_reporting(E_ALL);
 
 class ImageResizer {
 	
@@ -359,39 +359,9 @@ class ImageResizer {
 			$this->_image = new Imagick();
 	        $this->_image->readImageBlob($this->_data);
 
-			if(isset($opts['brightness']) && !empty($opts['brightness'])){
-	        	
-				$this->_image->modulateImage($opts['brightness'], 100, 100);
-			}
+	        //For image cropping
 
-			if(isset($opts['saturation']) && !empty($opts['saturation'])){
-	        	
-	        	$this->_image->modulateImage(100, $opts['saturation'], 100);
-			}
-
-			if(isset($opts['hue']) && !empty($opts['hue'])){
-
-	        	$this->_image->modulateImage(100, 100, $opts['hue']);
-			}
-
-			if(isset($opts['contrast']) && !empty($opts['contrast'])){
-	        	
-	        	$this->_image->contrastImage($opts['contrast']);
-			}
-
-			if(isset($opts['composite']) && !empty($opts['composite'])){
-	        	
-	        	$over = new Imagick($opts['composite']);
-
-				$d = $this->_image->getImageGeometry();
-				$w = $d['width'];
-				$h = $d['height'];
-
-				$over->thumbnailImage($w, $h);
-
-				$this->_image->compositeImage($over, imagick::COMPOSITE_DEFAULT, 0, 0);
-			}
-			if(isset($opts['cropx']) && !empty($opts['cropx'])){
+	        if(isset($opts['cropx']) && !empty($opts['cropx'])){
 
 				if(!isset($opts['cropy']) || empty($opts['cropy'])){
 					$opts['cropy'] = 0;
@@ -436,6 +406,45 @@ class ImageResizer {
 
 				$this->_image->cropImage($maxwidth,$maxheight,$opts['cropx'],$opts['cropy']);
 			}
+
+			//Modulate: 100 is the norm
+
+			if(isset($opts['brightness']) && !empty($opts['brightness'])){
+	        	
+				$this->_image->modulateImage($opts['brightness'], 100, 100);
+			}
+
+			if(isset($opts['saturation']) && !empty($opts['saturation'])){
+	        	
+	        	$this->_image->modulateImage(100, $opts['saturation'], 100);
+			}
+
+			if(isset($opts['hue']) && !empty($opts['hue'])){
+
+	        	$this->_image->modulateImage(100, 100, $opts['hue']);
+			}
+
+			if(isset($opts['contrast']) && !empty($opts['contrast'])){
+	        	
+	        	$this->_image->contrastImage($opts['contrast']);
+			}
+
+			//To blend 2 images
+
+			if(isset($opts['composite']) && !empty($opts['composite'])){
+	        	
+	        	$over = new Imagick($opts['composite']);
+
+				$d = $this->_image->getImageGeometry();
+				$w = $d['width'];
+				$h = $d['height'];
+
+				$over->thumbnailImage($w, $h);
+
+				$this->_image->compositeImage($over, imagick::COMPOSITE_DEFAULT, 0, 0);
+			}
+
+			
 
 			$this->_data = $this->_image->getImageBlob();
 
