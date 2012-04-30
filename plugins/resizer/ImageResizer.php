@@ -354,8 +354,10 @@ class ImageResizer {
 		//The following depends on Imagick
 		//$this->_image is the Imagick Object; add calls to the different native functions as needed, it is returned as $this->_data at the end.
 
-		if(class_exists('Imagick')){
+		if(class_exists('Imagick') &&
+			(isset($opts['cropx']) || isset($opts['cropy']) || isset($opts['brightness'])  || isset($opts['saturation']) || isset($opts['hue']) || isset($opts['contrast']) || isset($opts['composite']))){
 
+			IMagick::setResourceLimit(imagick::RESOURCETYPE_MEMORY, 512);
 			$this->_image = new Imagick();
 	        $this->_image->readImageBlob($this->_data);
 
@@ -442,11 +444,15 @@ class ImageResizer {
 				$over->thumbnailImage($w, $h);
 
 				$this->_image->compositeImage($over, imagick::COMPOSITE_DEFAULT, 0, 0);
+
+				$over->clear();
+				$over->destroy();
 			}
 
-			
-
 			$this->_data = $this->_image->getImageBlob();
+
+			$this->_image->clear();
+    		$this->_image->destroy();
 
 		}
 		

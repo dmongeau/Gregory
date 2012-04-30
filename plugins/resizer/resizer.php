@@ -11,7 +11,7 @@ $config = array_merge(array(
 	'cachePath' => dirname(__FILE__).'/_cache',
 	'quality' => 90,
 	'cache' => true,
-	'memory_limit' => '500M',
+	'memory_limit' => '768M',
 	'size' => array()
 ),$config);
 
