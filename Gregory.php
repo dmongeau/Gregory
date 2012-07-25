@@ -648,6 +648,14 @@ class Gregory {
 		$this->_stylesheets = array();
 	}
 	
+	public function getScripts() {
+		return $this->_scripts;
+	}
+	
+	public function getStylesheets() {
+		return $this->_stylesheets;
+	}
+	
 	public function getScriptsAsHTML() {
 		
 		$lines = array();
